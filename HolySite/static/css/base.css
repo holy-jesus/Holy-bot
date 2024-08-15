@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body::-webkit-scrollbar{
+    display: none;
+}
+
+#chatMessages::-webkit-scrollbar{
+    display: none;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: .3;
+    }
+
+    50% {
+        opacity: .15;
+    }
+}
+
+@layer components {
+    .pros {
+        @apply bg-neutral-200 hover:bg-neutral-100 dark:bg-neutral-600 dark:hover:bg-neutral-500 scale-100 hover:scale-105 rounded-3xl h-96 w-64 flex flex-col items-center text-black dark:text-white text-center px-5 transition-all duration-300 shadow-neutral-500 dark:shadow-neutral-900 shadow-lg;
+    }
+    .icon-circle {
+        @apply bg-neutral-300 dark:bg-neutral-400 w-24 h-24 rounded-full p-4 mt-5 mb-3 transition-all duration-300;
+    }
+    .button-color{
+        @apply dark:bg-neutral-500 dark:hover:bg-neutral-600 bg-neutral-400 hover:bg-neutral-500;
+    }
+    .basic-button {
+        @apply px-4 py-1 text-sm text-white font-semibold rounded-full button-color focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-300;
+    }
+    .sidebar-button {
+        @apply mt-3 button-color h-7 rounded-full text-left px-2 transition-all duration-300 dark:text-white text-black;
+    }   
+}
