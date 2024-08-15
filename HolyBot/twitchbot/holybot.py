@@ -20,11 +20,9 @@ from holy_bot.HolyBot.connectors import Client
 
 try:
     from channels import Channels
-    from commands import Commands
     from timerhandler import Timer
 except ImportError:
     from .channels import Channels
-    from .commands import Commands
     from .timerhandler import Timer
 
 # "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <level>{message}</level>"
@@ -59,7 +57,7 @@ class HolyBot:
         )["holy_bot"]
 
         self.channels = Channels(self)
-        self.commands = Commands(self)
+        # self.commands = Commands(self)
         # self.timer = Timer(self)
 
         self.connected: asyncio.Event = asyncio.Event()
@@ -329,7 +327,7 @@ class HolyBot:
     async def _privmsg(self, parsed: dict) -> None:
         if parsed["user-id"] == self.bot["user-id"]:
             return
-        await self.commands.execute_command(parsed)
+        # await self.commands.execute_command(parsed)
 
     async def _ping(self, _) -> None:
         await self._send("PONG :tmi.twitch.tv")
