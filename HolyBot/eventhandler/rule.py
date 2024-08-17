@@ -1,10 +1,12 @@
-from trigger import Trigger
-from action import Action
+from HolyBot.eventhandler.triggers import Triggers
+from HolyBot.eventhandler.actions import Actions
+
+trigger = Triggers()
+actions = Actions()
 
 class Rule:
-    def __init__(self, trigger: Trigger, action: Action) -> None:
-        self.trigger = trigger
-        self.action = action
-
-    def __call__(self, *args, **kwds):
-        pass
+    async def get(channel_id: str, type: str, data: dict):  
+        query = trigger.get(type, data)
+        if not query:
+            return
+        await actions.get(query)
