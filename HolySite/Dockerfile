@@ -14,9 +14,9 @@ FROM python:3.12.6
 
 WORKDIR /app
 
-COPY --from=frontend-build /frontend/dist /app/static
+COPY --from=frontend-build /frontend/dist /app/dist
 
-ENV frontend=/app/static
+ENV frontend=/app/dist
 
 COPY ./backend .
 RUN pip install --no-cache-dir -r requirements.txt
