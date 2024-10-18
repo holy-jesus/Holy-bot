@@ -1,7 +1,7 @@
 import uuid
 import asyncio
 from asyncio import BaseEventLoop, CancelledError, Future, Task
-from inspect import iscoroutinefunction
+from inspect import iscoroutinefunction, isfunction
 
 import orjson
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
@@ -80,9 +80,15 @@ class Client:
                 del self.__waiting_for_response[id]
         return None
 
-    def event(self, func):
-        self.__events[func.__name__] = func
-        return func
+    def event(self, name: str = None):
+        def wrapper(func):
+            self.__events[name] = func
+
+        if isfunction(name):
+            func = name
+            name = func.__name__
+            return wrapper(func)
+        return wrapper
 
     def wrap_class(self, _class):
         def wrapper(*args, **kwargs):
