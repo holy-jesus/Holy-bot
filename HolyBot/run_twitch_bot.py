@@ -1,4 +1,4 @@
-import twitchbot.holybot
-twitchbot.holybot.DEBUG = True
-bot = twitchbot.holybot.HolyBot()
+from twitchbot import HolyBot
+
+bot = HolyBot()
 bot.run()
