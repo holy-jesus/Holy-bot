@@ -80,14 +80,6 @@ class Client:
                 del self.__waiting_for_response[id]
         return None
 
-    async def __set_result(self, id: str, result: str):
-        future = self.__waiting_for_response.get(id, None)
-        if not future:
-            logger.error(f"Поступил несуществующий ответ: {id}")
-            return
-        future.set_result(result)
-        del self.__waiting_for_response[id]
-
     def event(self, func):
         self.__events[func.__name__] = func
         return func
