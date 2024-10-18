@@ -4,30 +4,29 @@ from time import perf_counter, time
 
 import aiofiles
 import aiohttp
-import uvloop
-from fake_headers import Headers
+from fake_http_header import FakeHttpHeader
 from loguru import logger
 from shazamio import Shazam
 
-from connectors import Client
+from kafkaclient import Client
 
 logger.remove()
 logger.add(sys.stdout, level="TRACE", enqueue=True)
 
+LOOP = asyncio.new_event_loop()
+asyncio.set_event_loop(LOOP)
 
+client = Client("recognizer", LOOP)
+
+@client.wrap_class
 class Recognizer:
-    client = Client(name="recognizer", host="localhost", port=42069)
 
     def __init__(self) -> None:
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-        self.loop: asyncio.AbstractEventLoop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
+        self.loop = LOOP
         self.session: aiohttp.ClientSession = None
         self.shazam: Shazam = None
-        self.client.instance_of_class = self
-        self.client.loop = self.loop
         self.client_id = "ue6666qo983tsx6so1t0vnawi233wa"
-        self.headers = Headers(headers=True).generate()
+        self.headers = FakeHttpHeader(referer="https://www.twitch.tv/").as_header_dict()
         self.headers.update(
             {
                 "Client-Id": self.client_id,
@@ -222,16 +221,17 @@ class Recognizer:
     async def start(self) -> None:
         self.session = aiohttp.ClientSession()
         self.shazam = Shazam()
-        await self.client.connect()
+        await client.start()
+
+    async def stop(self) -> None:
+        await self.session.close()
+        await client.stop()
 
     def run(self) -> None:
         try:
             self.loop.create_task(self.start())
             self.loop.run_forever()
         except KeyboardInterrupt:
-            pass
-
-
-if __name__ == "__main__":
-    recognizer = Recognizer()
-    recognizer.run()
+            self.loop.run_until_complete(self.stop())
+            self.loop.stop()
+            self.loop.run_forever()
