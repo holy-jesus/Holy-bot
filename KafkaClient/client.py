@@ -1,7 +1,7 @@
 import uuid
 import asyncio
 from asyncio import BaseEventLoop, CancelledError, Future, Task
-from inspect import iscoroutine, isawaitable, iscoroutinefunction
+from inspect import iscoroutinefunction
 
 import orjson
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
@@ -134,7 +134,7 @@ class Client:
         if not all(key in data for key in ("id", "response")):
             logger.error(f"Неправильные данные: {data}")
             return
-        future = self.__waiting_for_response.get(data["id"], None)
+        future = self.__waiting_for_response.pop(data["id"], None)
         if future is None:
             logger.error(f"Неверное ID ответа: {data['id']}")
             return
