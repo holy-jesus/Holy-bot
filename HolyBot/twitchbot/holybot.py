@@ -1,11 +1,9 @@
 import asyncio
 import os
 import sys
-import traceback
-from typing import Literal
 import logging
+from typing import Literal
 
-import uvloop
 import websockets.client
 from dotenv import load_dotenv
 from loguru import logger
@@ -16,38 +14,29 @@ from websockets.exceptions import (
     WebSocketException,
 )
 
-from holy_bot.HolyBot.connectors import Client
+from kafkaclient import Client
+from .channels import Channels
 
-try:
-    from channels import Channels
-    from timerhandler import Timer
-except ImportError:
-    from .channels import Channels
-    from .timerhandler import Timer
 
-# "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <level>{message}</level>"
-DEBUG = __name__ == "__main__"
+load_dotenv(".env")
+
+
 logger.remove()
 logger.add(sys.stdout, level="TRACE", enqueue=True)
 
 HOST = "wss://irc-ws.chat.twitch.tv:443"
 KAPPA = "kappa"
+LOOP = asyncio.new_event_loop()
+asyncio.set_event_loop(LOOP)
 
-load_dotenv(".env")
+client = Client("twitchbot", LOOP)
 
+@client.wrap_class
 class HolyBot:
-    client = Client(name="twitchbot", host="localhost", port=42069)
-
     def __init__(self) -> None:
         self.token = os.getenv("twitch_token")
 
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
-
-        self.client.instance_of_class = self
-        self.client.loop = self.loop
-        self.client.start()
+        self.loop = LOOP
 
         self.ws: websockets.client.WebSocketClientProtocol = None
         self.bot: dict = {"display-name": "hoIy_bot", "login": "hoiy_bot"}
@@ -75,6 +64,7 @@ class HolyBot:
 
     def run(self) -> None:
         try:
+            self.loop.create_task(client.start())
             self.loop.create_task(self._connect())
             self.loop.run_forever()
         except KeyboardInterrupt:
@@ -85,8 +75,7 @@ class HolyBot:
             self.thread_task.cancel()
         if not self.ws.closed:
             await self.ws.close()
-        if self.client.writer:
-            self.client.writer.close()
+        await client.stop()
         self.db.client.close()
 
     async def _connect(self) -> None:
@@ -150,9 +139,6 @@ class HolyBot:
             await self._internal_events[command](parsed)
         except Exception as e:
             logger.exception(e)
-            if not DEBUG:
-                text = "".join(traceback.format_tb(e.__traceback__))
-                await self.make_api_request("error", name=str(e), text=text)
 
     # Sending messages
 
@@ -247,7 +233,7 @@ class HolyBot:
         )
 
     async def make_api_request(self, event: str, **kwargs):
-        await self.client.send_event("twitchapi", event, data=kwargs)
+        await client.send_event("twitchapi", event, **kwargs)
 
     # Parsing events
 
@@ -375,8 +361,3 @@ class HolyBot:
         self.bot.update(parsed)
         self.bot["login"] = self.bot["display-name"].lower()
         logger.info(f"Успешно залогинился как {self.bot['display-name']}")
-
-
-if DEBUG:
-    bot = HolyBot()
-    bot.run()
