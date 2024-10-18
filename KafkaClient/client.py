@@ -83,7 +83,7 @@ class Client:
     def event(self, name: str = None):
         def wrapper(func):
             self.__events[name] = func
-
+            return func
         if isfunction(name):
             func = name
             name = func.__name__
@@ -146,18 +146,10 @@ if __name__ == "__main__":
     asyncio.set_event_loop(loop)
     client = Client("client", loop)
 
-    @client.wrap_class
-    class Test:
-        @client.event
-        async def test(self):
-            print("Func is called")
-            await asyncio.sleep(5)
-            return "Hello world"
-
     async def main():
         await client.start()
         response = await client.send_event(
-            "client", "test", wait_for_response=True, response_timeout=6.0
+            "recognizer", "recognize", login="hoiy_jesus", wait_for_response=True
         )
         print(response)
 
