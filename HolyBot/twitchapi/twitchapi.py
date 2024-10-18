@@ -1,50 +1,42 @@
 import asyncio
 import os
-
-# import difflib
 import sys
-import traceback
 from time import time
-import socket
+from datetime import datetime
 
 import aiohttp
-import dateutil.parser
-import motor.motor_asyncio
 import orjson
-import uvloop
-from cache import AsyncTTL
+from motor.motor_asyncio import AsyncIOMotorClient
+from aiocache import Cache, cached
 from dotenv import load_dotenv
 from loguru import logger
-from motor import core
 
-if socket.gethostname() == "fedora":
-    from holy_bot.HolyBot.connectors.client import Client
-else:
-    from connectors import Client
+from kafkaclient import Client
 
-load_dotenv(
-    ".env"
-)
 logger.remove()
 logger.add(sys.stdout, level="TRACE", enqueue=True)
 
+load_dotenv(".env")
+
+TOKEN = os.getenv("twitch_token")
+CLIENT_ID = os.getenv("app_id")
+SECRET = os.getenv("app_secret")
+LOOP = asyncio.new_event_loop()
+asyncio.set_event_loop(LOOP)
+
+client = Client("twitchapi", LOOP)
 
 class TwitchApi:
-    client = Client(name="twitchapi", host="localhost", port=42069)
-
-    def __init__(self, client_id, secret):
-        self.client_id = client_id
+    def __init__(self):
+        self.bot_token = TOKEN
+        self.client_id = CLIENT_ID
+        self.secret = SECRET
+        self.loop = LOOP
         self.token = None
-        self.bot_token = os.getenv("twitch_token")
-        self.client.instance_of_class = self
-        self.secret = secret
         self.session = None
         self.expiration_time = time()
         self.headers = {"Client-Id": self.client_id}
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
-        self.db: core.Database = motor.motor_asyncio.AsyncIOMotorClient(
+        self.db = AsyncIOMotorClient(
             os.getenv("mongodb_link")
         )["holy_bot"]
 
@@ -133,7 +125,7 @@ class TwitchApi:
         return user
 
     @client.event()
-    async def get_user_information(self, user_id, access_token):
+    async def get_user_information(self, user_id: str, access_token: str):
         db_info = (await self.db.users.find_one({"id": user_id})) or {}
         stream_info = {
             "is_live": False,
@@ -148,20 +140,20 @@ class TwitchApi:
         data = await self.get_streams([user_id], first=1, token=access_token)
         if data:
             stream_info["is_live"] = True
-            stream_info["start_time"] = dateutil.parser.isoparse(
+            stream_info["start_time"] = datetime.fromisoformat(
                 data[0]["started_at"]
             ).timestamp()
             stream_id, vod_id = await self.get_current_stream(user_id)
             if vod_id:
                 played_time, game_time = await self.get_played_time_from_stream(vod_id)
                 if not game_time:
-                    game_time = dateutil.parser.isoparse(
+                    game_time = datetime.fromisoformat(
                         data[0]["started_at"]
                     ).timestamp()
                 stream_info["game_time"] = game_time
                 stream_info["played_time"] = played_time
             elif stream_id != db_info.get("stream_id", None):
-                stream_info["game_time"] = dateutil.parser.isoparse(
+                stream_info["game_time"] = datetime.fromisoformat(
                     data[0]["started_at"]
                 ).timestamp()
             stream_info["stream_id"] = stream_id
@@ -261,18 +253,18 @@ class TwitchApi:
                         await self.db["games"].insert_one(db_game)
                 else:
                     pass
-                    """games = []
-                    async for db_game in self.db["games"].find():
-                        games += db_game["names"]"""
-                    """closest = difflib.get_close_matches(
-                        game_name, [_game.name for _game in Game.select()], n=1, cutoff=0.70
-                    )
-                    if not closest:
-                        if not connection.is_closed():
-                            connection.close()
-                        return {"channel_id": user.id, "success": False, "game": ""}
-                    else:
-                        game_obj = Game.get(name=closest[0])"""
+                    # games = []
+                    # async for db_game in self.db["games"].find():
+                    #     games += db_game["names"]
+                    # closest = difflib.get_close_matches(
+                    #     game_name, [_game.name for _game in Game.select()], n=1, cutoff=0.70
+                    # )
+                    # if not closest:
+                    #     if not connection.is_closed():
+                    #         connection.close()
+                    #     return {"channel_id": user.id, "success": False, "game": ""}
+                    # else:
+                    #     game_obj = Game.get(name=closest[0])
             response = await self.make_request(
                 "PATCH",
                 f"https://api.twitch.tv/helix/channels?broadcaster_id={channel_id}",
@@ -393,7 +385,7 @@ class TwitchApi:
         return None
 
     @client.event()
-    async def delete_eventsub_subscription(self, subscription_id):
+    async def delete_eventsub_subscription(self, subscription_id: str):
         if self.token is None or self.expiration_time < time():
             await self.create_app_token()
         response = await self.make_request(
@@ -415,7 +407,7 @@ class TwitchApi:
         )
         return (await response.json(loads=orjson.loads))["data"]
 
-    @client.event("send_whisper")
+    @client.event()
     async def send_whisper(self, from_user_id, to_user_id, message):
         headers = self.headers.copy()
         headers["Authorization"] = f"Bearer {self.bot_token}"
@@ -429,7 +421,7 @@ class TwitchApi:
         )
         return response.status
 
-    @client.event("delete_chat_messages")
+    @client.event()
     async def delete_chat_messages(self, broadcaster_id, moderator_id, message_id=None):
         headers = self.headers.copy()
         headers["Authorization"] = f"Bearer {self.bot_token}"
@@ -440,7 +432,7 @@ class TwitchApi:
         )
         return response.status
 
-    @client.event("send_chat_announcement")
+    @client.event()
     async def send_chat_announcement(
         self, broadcaster_id, moderator_id, message, color=None
     ):
@@ -455,7 +447,7 @@ class TwitchApi:
         )
         return response.status
 
-    @client.event("ban_user")
+    @client.event()
     async def ban_user(
         self,
         broadcaster_id: str,
@@ -480,8 +472,8 @@ class TwitchApi:
             json=data,
         )
 
-    @client.event("get_emotes")
-    @AsyncTTL(time_to_live=3600, maxsize=1024)
+    @client.event()
+    @cached(cache=Cache.REDIS, ttl=3600, noself=True)
     async def get_emotes(self, channels_ids):
         if self.token is None or self.expiration_time < int(time()):
             await self.create_app_token()
@@ -536,8 +528,8 @@ class TwitchApi:
             )
         return channels
 
-    @client.event("get_rules")
-    @AsyncTTL(time_to_live=3600, maxsize=1024)
+    @client.event()
+    @cached(cache=Cache.REDIS, ttl=3600, noself=True)
     async def get_rules(self, channels_names):
         if self.token is None or self.expiration_time < int(time()):
             await self.create_app_token()
@@ -589,47 +581,13 @@ class TwitchApi:
             channels_rules[channel_id] = text.strip()
         return channels_rules
 
-    def exception_handler(self, _, exc):
-        self.loop.create_task(self.notify_about_exception(exc))
-
-    async def notify_about_exception(self, exc):
-        logger.exception(exc["exception"])
-        name = str(exc["exception"])
-        text = "".join(traceback.format_tb(exc["exception"].__traceback__))
-        await self.error(name, text)
-
-    @client.event("error")
-    async def error(self, name, text, priority=None):
-        if priority is None:
-            priority = "default"
-        await self.make_request(
-            "POST",
-            "https://ntfy.sh/holybotbugreport9989443",
-            headers={"Title": name, "Priority": priority},
-            data=text,
-        )
+    def exception_handler(self, _, exc): ...
 
     def start(self):
-        self.loop.set_exception_handler(self.exception_handler)
-        self.client.loop = self.loop
-        self.loop.create_task(self.client.connect())
-        self.loop.run_forever()
-
-
-if __name__ == "__main__":
-    from dotenv import load_dotenv
-    import os
-
-    load_dotenv(
-        ".env"
-    )
-
-    async def main():
-        twitchapi = TwitchApi(
-            client_id=os.getenv("app_id"),
-            secret=os.getenv("app_secret"),
-        )
-        my_id = "240473610"
-        print(await twitchapi.get_user_information(my_id, None))
-
-    asyncio.run(main())
+        try:
+            self.loop.set_exception_handler(self.exception_handler)
+            self.loop.create_task(client.start())
+            self.loop.run_forever()
+        except Exception:
+            self.loop.run_until_complete(client.stop())
+            self.loop.stop()
