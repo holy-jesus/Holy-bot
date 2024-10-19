@@ -40,7 +40,9 @@ class TwitchApi:
         self.session = None
         self.expiration_time = time()
         self.headers = {"Client-Id": self.client_id}
-        self.db = AsyncIOMotorClient(username=MONGODB_USERNAME, password=MONGODB_PASSWORD)["holy_bot"]
+        self.db = AsyncIOMotorClient(
+            username=MONGODB_USERNAME, password=MONGODB_PASSWORD
+        )["holy_bot"]
 
     async def make_request(
         self, method, url, headers=None, params=None, data=None, json=None
@@ -591,6 +593,10 @@ class TwitchApi:
             self.loop.set_exception_handler(self.exception_handler)
             self.loop.create_task(client.start())
             self.loop.run_forever()
-        except Exception:
+        except KeyboardInterrupt:
+            pass
+        finally:
             self.loop.run_until_complete(client.stop())
+            if self.session:
+                self.loop.run_until_complete(self.session.close())
             self.loop.stop()
