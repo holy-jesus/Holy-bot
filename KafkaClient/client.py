@@ -37,7 +37,6 @@ class Client:
     async def __poll(self):
         try:
             async for message in self._consumer:
-                print(self.__events)
                 try:
                     data = orjson.loads(message.value)
                     await self.__on_message(data)
