@@ -1,31 +1,35 @@
+import asyncio
 from typing import TYPE_CHECKING
 
+from kafkaclient import Client
+
 if TYPE_CHECKING:
-    import asyncio
     from twitchbot.holybot import HolyBot
 
 
-class Timer:
-    def __init__(self, bot: "HolyBot") -> None:
-        self.bot = bot
-        self.loop: "asyncio.AbstractEventLoop" = bot.loop
-        self.db = bot.db
-        self.client = bot.client
-        self.timers: dict[str, "asyncio.TimerHandle"] = {}
-        self.loop.create_task(self.start_from_db())
-        self.client.event(self.start_from_db)
-        self.client.event(self.disable_timer)
+client = Client("timer")
 
+@client.wrap_class
+class Timer:
+    def __init__(self, bot: "HolyBot", client: "Client") -> None:
+        self.bot = bot
+        self.client = client
+        self.loop: asyncio.BaseEventLoop = bot.loop
+        self.db = bot.db
+        self.timers: dict[str, asyncio.TimerHandle] = {}
+        self.loop.create_task(self.start_from_db())
 
     def start_timer(self, timer: dict):
         self.timers[timer["_id"]] = self.loop.call_later(
             timer["cooldown"] * 60, self.callback, timer
         )
 
+    @client.event()
     async def start_from_db(self, **kwargs):
         async for timer in self.db.timers.find(kwargs):
             self.start_timer(timer)
 
+    @client.event()
     async def disable_timer(self, _id: str):
         self.timers[_id].cancel()
         del self.timers[_id]

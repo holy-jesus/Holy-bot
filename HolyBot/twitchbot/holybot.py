@@ -2,12 +2,12 @@ import asyncio
 import os
 import sys
 import logging
+from asyncio import CancelledError
 from typing import Literal
 
-import websockets.client
+from websockets.asyncio.client import connect, ClientConnection
 from dotenv import load_dotenv
 from loguru import logger
-from motor import core
 from motor.motor_asyncio import AsyncIOMotorClient
 from websockets.exceptions import (
     ConnectionClosed,
@@ -27,27 +27,27 @@ logger.add(sys.stdout, level="TRACE", enqueue=True)
 HOST = "wss://irc-ws.chat.twitch.tv:443"
 KAPPA = "kappa"
 LOOP = asyncio.new_event_loop()
+TOKEN = os.getenv("twitch_token")
 asyncio.set_event_loop(LOOP)
 
 client = Client("twitchbot", LOOP)
 
+
 @client.wrap_class
 class HolyBot:
     def __init__(self) -> None:
-        self.token = os.getenv("twitch_token")
-
+        self.token = TOKEN
         self.loop = LOOP
 
-        self.ws: websockets.client.WebSocketClientProtocol = None
+        self.ws: ClientConnection = None
         self.bot: dict = {"display-name": "hoIy_bot", "login": "hoiy_bot"}
 
-        self.db: core.Database = AsyncIOMotorClient(
-            os.getenv("mongodb_link"), connect=False
-        )["holy_bot"]
+        self.db = AsyncIOMotorClient(os.getenv("mongodb_link"), connect=False)[
+            "holy_bot"
+        ]
 
         self.channels = Channels(self)
-        # self.commands = Commands(self)
-        # self.timer = Timer(self)
+        # self.timer = Timer(self, client)
 
         self.connected: asyncio.Event = asyncio.Event()
         self.thread_task: asyncio.Task = None
@@ -67,13 +67,14 @@ class HolyBot:
             self.loop.create_task(client.start())
             self.loop.create_task(self._connect())
             self.loop.run_forever()
-        except KeyboardInterrupt:
+        finally:
             self.loop.run_until_complete(self.close())
+            self.loop.stop()
 
     async def close(self):
         if self.thread_task:
             self.thread_task.cancel()
-        if not self.ws.closed:
+        if self.ws:
             await self.ws.close()
         await client.stop()
         self.db.client.close()
@@ -89,15 +90,17 @@ class HolyBot:
                 sh.setLevel(logging.INFO)
                 sh.setFormatter(formatter)
                 websocket_logger.addHandler(sh)
-                self.ws = await websockets.client.connect(
+                if self.ws:
+                    await self.ws.close()
+                self.ws = await connect(
                     HOST,
-                    ping_timeout=10,
-                    ping_interval=60,
                     logger=websocket_logger,
                 )
                 break
             except Exception:
-                logger.warning("Не могу подключиться к Twitch, повторная попытка через 15 секунд...")
+                logger.warning(
+                    "Не могу подключиться к Twitch, повторная попытка через 15 секунд..."
+                )
                 await asyncio.sleep(15)
         await self._send(
             "CAP REQ :twitch.tv/commands twitch.tv/membership twitch.tv/tags"
@@ -124,6 +127,8 @@ class HolyBot:
                 else:
                     logger.error("Соединение скорее всего закрыто.")
                     raise Exception("CONNECTION CLOSED")
+        except CancelledError:
+            return
         except Exception as e:
             logger.exception(e)
             self.connected.clear()
@@ -321,7 +326,8 @@ class HolyBot:
     async def _join(self, parsed: dict) -> None:
         if parsed["login"] == self.bot["login"]:
             self.channels.set_status(
-                parsed["channel"], {"success": True, "error": None, "status": "connected"}
+                parsed["channel"],
+                {"success": True, "error": None, "status": "connected"},
             )
 
     async def _part(self, parsed: dict) -> None:
@@ -330,9 +336,7 @@ class HolyBot:
             if not channel:
                 logger.info(f"Успешно вышел из {parsed['channel']} канала")
             else:
-                logger.warning(
-                    f"Бот был забанен на {parsed['channel']} канале"
-                )
+                logger.warning(f"Бот был забанен на {parsed['channel']} канале")
                 await self.db.users.update_one(
                     {"login": parsed["channel"]}, {"$set": {"bot_enabled": False}}
                 )
