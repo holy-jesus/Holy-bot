@@ -37,6 +37,7 @@ class Client:
     async def __poll(self):
         try:
             async for message in self._consumer:
+                print(self.__events)
                 try:
                     data = orjson.loads(message.value)
                     await self.__on_message(data)
@@ -82,8 +83,12 @@ class Client:
 
     def event(self, name: str = None):
         def wrapper(func):
+            nonlocal name
+            if name is None:
+                name = func.__name__
             self.__events[name] = func
             return func
+
         if isfunction(name):
             func = name
             name = func.__name__
