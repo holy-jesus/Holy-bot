@@ -28,6 +28,8 @@ HOST = "wss://irc-ws.chat.twitch.tv:443"
 KAPPA = "kappa"
 LOOP = asyncio.new_event_loop()
 TOKEN = os.getenv("twitch_token")
+MONGODB_USERNAME = os.getenv("mongodb_username")
+MONGODB_PASSWORD = os.getenv("mongodb_password")
 asyncio.set_event_loop(LOOP)
 
 client = Client("twitchbot", LOOP)
@@ -42,9 +44,11 @@ class HolyBot:
         self.ws: ClientConnection = None
         self.bot: dict = {"display-name": "hoIy_bot", "login": "hoiy_bot"}
 
-        self.db = AsyncIOMotorClient(os.getenv("mongodb_link"), connect=False)[
-            "holy_bot"
-        ]
+        self.db = AsyncIOMotorClient(
+            username=MONGODB_USERNAME,
+            password=MONGODB_PASSWORD,
+            connect=False,
+        )["holy_bot"]
 
         self.channels = Channels(self)
         # self.timer = Timer(self)
