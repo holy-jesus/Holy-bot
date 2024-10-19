@@ -35,15 +35,16 @@ class Client:
             self.__poll_task.cancel()
 
     async def __poll(self):
-        try:
-            async for message in self._consumer:
-                try:
-                    data = orjson.loads(message.value)
-                    await self.__on_message(data)
-                except orjson.JSONDecodeError:
-                    logger.error(f"Неизвестные данные: {message}")
-        except CancelledError:
-            pass
+        async for message in self._consumer:
+            try:
+                data = orjson.loads(message.value)
+                await self.__on_message(data)
+            except orjson.JSONDecodeError:
+                logger.error(f"Неизвестные данные: {message}")
+            except CancelledError:
+                return
+            except Exception as e:
+                logger.exception(e)
 
     async def send_event(
         self,
