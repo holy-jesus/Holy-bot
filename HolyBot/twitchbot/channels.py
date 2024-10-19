@@ -4,13 +4,12 @@ import asyncio
 
 if TYPE_CHECKING:
     from twitchbot.holybot import HolyBot
-    from motor import core
 
 
 class Channels:
     def __init__(self, bot: "HolyBot") -> None:
         self.bot = bot
-        self.db: "core.Collection" = bot.db.users
+        self.db = bot.db.users
         self.loop = bot.loop
         self._statuses: dict[str, asyncio.Future] = {}
         self._channels_by_id: dict[str, dict] = {}
