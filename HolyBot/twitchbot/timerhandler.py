@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 
 client = Client("timer")
 
+
 @client.wrap_class
 class Timer:
     def __init__(self, bot: "HolyBot") -> None:
