@@ -47,7 +47,7 @@ class HolyBot:
         ]
 
         self.channels = Channels(self)
-        # self.timer = Timer(self, client)
+        # self.timer = Timer(self)
 
         self.connected: asyncio.Event = asyncio.Event()
         self.thread_task: asyncio.Task = None

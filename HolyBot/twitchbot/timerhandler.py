@@ -11,7 +11,7 @@ client = Client("timer")
 
 @client.wrap_class
 class Timer:
-    def __init__(self, bot: "HolyBot", client: "Client") -> None:
+    def __init__(self, bot: "HolyBot") -> None:
         self.bot = bot
         self.client = client
         self.loop: asyncio.BaseEventLoop = bot.loop
