@@ -50,13 +50,3 @@ class Timer:
 
     async def send_announcment(self, text: str, id: str):
         await self.bot.send_chat_announcement(text, id)
-
-
-"""
-Timers:
-    _id: ...
-    channel_id: ...
-    message: text what to send
-    offline_cooldown: minimum 5 min max 1440 min
-    online_cooldown: minimum 5 min max 1440 min
-"""
