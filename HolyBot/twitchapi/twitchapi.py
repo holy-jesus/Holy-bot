@@ -21,10 +21,13 @@ load_dotenv(".env")
 TOKEN = os.getenv("twitch_token")
 CLIENT_ID = os.getenv("app_id")
 SECRET = os.getenv("app_secret")
+MONGODB_USERNAME = os.getenv("mongodb_username")
+MONGODB_PASSWORD = os.getenv("mongodb_password")
 LOOP = asyncio.new_event_loop()
 asyncio.set_event_loop(LOOP)
 
 client = Client("twitchapi", LOOP)
+
 
 @client.wrap_class
 class TwitchApi:
@@ -37,9 +40,7 @@ class TwitchApi:
         self.session = None
         self.expiration_time = time()
         self.headers = {"Client-Id": self.client_id}
-        self.db = AsyncIOMotorClient(
-            os.getenv("mongodb_link")
-        )["holy_bot"]
+        self.db = AsyncIOMotorClient(username=MONGODB_USERNAME, password=MONGODB_PASSWORD)["holy_bot"]
 
     async def make_request(
         self, method, url, headers=None, params=None, data=None, json=None
@@ -582,7 +583,8 @@ class TwitchApi:
             channels_rules[channel_id] = text.strip()
         return channels_rules
 
-    def exception_handler(self, _, exc): ...
+    def exception_handler(self, _, exc):
+        logger.exception(exc)
 
     def start(self):
         try:
