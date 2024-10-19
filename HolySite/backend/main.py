@@ -1,12 +1,10 @@
-from typing import Annotated
-from inspect import getfullargspec
-
-from fastapi import FastAPI, Request, Response, Depends, Header
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from path import get_frontend
 from sessions import client
+from routes import routes
 
 
 frontend_path, index_path, assets_path = get_frontend()
@@ -29,6 +27,8 @@ async def update_token(request: Request, call_next):
 
 
 app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+for route in routes:
+    app.include_router(route)
 
 
 @app.get("/")
