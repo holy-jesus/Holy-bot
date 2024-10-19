@@ -26,6 +26,7 @@ asyncio.set_event_loop(LOOP)
 
 client = Client("twitchapi", LOOP)
 
+@client.wrap_class
 class TwitchApi:
     def __init__(self):
         self.bot_token = TOKEN
