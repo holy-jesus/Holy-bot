@@ -1,13 +1,14 @@
 from fastapi import FastAPI, Request, Response
-from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from dotenv import load_dotenv
+import secrets
 
-from path import get_frontend
+from frontend_handler import assets_path, get_frontend
 from sessions import client
 from routes import routes
+from token_handler import verify_session, set_token_cookie
 
-
-frontend_path, index_path, assets_path = get_frontend()
+load_dotenv(".env")
 
 
 async def lifespan(app: FastAPI):
@@ -21,8 +22,16 @@ app = FastAPI(lifespan=lifespan)
 
 @app.middleware("http")
 async def update_token(request: Request, call_next):
-    # Здесь получится только обновлять токен, потому что call_next принимает только request
     response: Response = await call_next(request)
+    token = request.cookies.get("token")
+    if token:
+        session = await verify_session(token)
+        if session is None:
+            response.delete_cookie("token")
+        elif session is True:
+            pass
+        else:
+            set_token_cookie(response, session)
     return response
 
 
@@ -32,5 +41,7 @@ for route in routes:
 
 
 @app.get("/")
-async def index(request: Request):
-    return HTMLResponse(index_path.read_text("utf-8"))
+def index(request: Request):
+    response = get_frontend()
+    response.set_cookie("state", secrets.token_hex(16), secure=True, samesite="lax")
+    return response
