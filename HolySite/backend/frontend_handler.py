@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from fastapi.responses import HTMLResponse
+
 
 class FrontendError(Exception):
     pass
@@ -36,3 +38,10 @@ def get_frontend():
         raise FrontendError(f'"{assets}" не является папкой.')
 
     return frontend, index, assets
+
+
+frontend_path, index_path, assets_path = get_frontend()
+
+
+def get_frontend():
+    return HTMLResponse(index_path.read_text("utf-8"))
