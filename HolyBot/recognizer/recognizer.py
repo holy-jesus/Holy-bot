@@ -18,6 +18,7 @@ asyncio.set_event_loop(LOOP)
 
 client = Client("recognizer", LOOP)
 
+
 @client.wrap_class
 class Recognizer:
 
@@ -190,7 +191,10 @@ class Recognizer:
                     "segments": {},
                     "errors": [],
                 }
-            if self.information[login]["task"] is None or self.information[login]["task"].done():
+            if (
+                self.information[login]["task"] is None
+                or self.information[login]["task"].done()
+            ):
                 await self.on_online(login)
                 await asyncio.sleep(16)
             for num, segment in enumerate(

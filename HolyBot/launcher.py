@@ -96,7 +96,7 @@ class Launcher:
                         program["running"] = False
                 elif choice in ["5", "all"]:
                     for name, program in FILES.items():
-                        if program['running']:
+                        if program["running"]:
                             continue
                         task = self.loop.create_task(self.thread(name, program))
                         program["task"] = task
@@ -155,7 +155,7 @@ class Launcher:
     async def close(self):
         if self.task:
             self.task.cancel()
-        
+
 
 if __name__ == "__main__":
     launcher = Launcher()

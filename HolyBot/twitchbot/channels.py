@@ -29,7 +29,10 @@ class Channels:
 
     async def join_all_channels(self):
         for i in range(len(self._channels))[::20]:
-            await self.bot.join_channels(logins=list(channel["login"] for channel in self._channels[i:i+20]), init=True)
+            await self.bot.join_channels(
+                logins=list(channel["login"] for channel in self._channels[i : i + 20]),
+                init=True,
+            )
             await asyncio.sleep(11.0)
 
     async def get_from_db(self, **kwargs) -> dict | None:
