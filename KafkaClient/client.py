@@ -2,6 +2,7 @@ import uuid
 import asyncio
 from asyncio import BaseEventLoop, CancelledError, Future, Task
 from inspect import iscoroutinefunction, isfunction
+from typing import Callable
 
 import orjson
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
@@ -16,7 +17,7 @@ class Client:
         self.__class_instance: object = None
         self._consumer: AIOKafkaConsumer | None = None
         self._producer: AIOKafkaProducer | None = None
-        self.__events: dict[str, function] = {}
+        self.__events: dict[str, Callable] = {}
         self.__waiting_for_response: dict[str, Future] = {}
 
     async def start(self):
