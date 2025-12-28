@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "holy-bot-dashboard",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,20 +9,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "drawflow": "^0.0.60",
-    "rete": "^2.0.5",
-    "rete-area-plugin": "^2.1.1",
-    "rete-connection-plugin": "^2.0.5",
-    "rete-render-utils": "^2.0.3",
-    "rete-vue-plugin": "^2.1.1",
-    "vue": "^3.4.21",
-    "vue-router": "^4.3.2"
+    "recharts": "^3.6.0",
+    "react": "^19.2.3",
+    "@google/genai": "^1.34.0",
+    "react-dom": "^19.2.3",
+    "react-router-dom": "^7.11.0",
+    "lucide-react": "^0.562.0",
+    "@xyflow/react": "12.0.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.0.4",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.47",
-    "tailwindcss": "^3.4.13",
-    "vite": "^5.2.0"
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
   }
 }

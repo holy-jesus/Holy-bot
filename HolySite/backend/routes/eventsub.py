@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from bson import ObjectId
 
 eventsub = APIRouter(prefix="/eventsub")
 

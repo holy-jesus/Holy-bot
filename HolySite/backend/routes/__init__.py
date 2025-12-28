@@ -1,5 +1,5 @@
-from .auth import auth
+from .login import login
 from .profile import profile
 from .eventsub import eventsub
 
-routes = (auth, profile, eventsub)
+routes = (login, profile, eventsub)
