@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  Twitch,
   Shield,
   Zap,
   Bot,
@@ -13,9 +12,9 @@ import {
   UserPlus,
 } from "lucide-react";
 import GlitchIcon from "@/assets/icons/glitch_flat_white.svg?react";
-import { Button } from "./Button";
-import { useLanguage } from "../contexts/LanguageContext";
-
+import { Button } from "@/components/Button";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { redirectToTwitch } from "@/services/auth";
 
 export const LandingPage: React.FC = () => {
   const { t, language, setLanguage } = useLanguage();
@@ -54,7 +53,7 @@ export const LandingPage: React.FC = () => {
             </button>
 
             <Button
-              onClick={onLogin}
+              onClick={redirectToTwitch}
               size="sm"
               variant="secondary"
               className="hidden md:flex"
@@ -84,7 +83,7 @@ export const LandingPage: React.FC = () => {
 
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
-                onClick={onLogin}
+                onClick={redirectToTwitch}
                 size="lg"
                 variant="none"
                 className="transition-all w-full sm:w-auto group bg-[#9146FF] scale-100 hover:scale-105"

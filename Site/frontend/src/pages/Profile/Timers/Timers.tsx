@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Timer as TimerIcon, Plus, Trash2, Clock, Edit2 } from 'lucide-react';
-import { Button } from './Button';
-import { Timer } from '../types';
-import { useLanguage } from '../contexts/LanguageContext';
+import { Button } from '@/components/Button';
+import { Timer } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const Timers: React.FC = () => {
   const { t } = useLanguage();

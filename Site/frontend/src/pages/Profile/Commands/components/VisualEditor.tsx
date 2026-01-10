@@ -12,7 +12,7 @@ import {
   BackgroundVariant
 } from '@xyflow/react';
 import { TriggerNode, ActionNode, ConditionNode } from './FlowNodes';
-import { useLanguage } from '../../contexts/LanguageContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const nodeTypes = {
   triggerNode: TriggerNode,

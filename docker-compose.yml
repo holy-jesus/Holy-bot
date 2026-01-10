@@ -1,0 +1,27 @@
+services:
+  
+  holybot-db:
+    image: postgres:18.1-trixie
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_PASSWORD: example
+
+  holybot-valkey:
+    image: valkey:9.0.1-trixie
+    restart: always
+
+  holybot-api:
+    image: ./API/
+
+  holybot-bot:
+    image: ./Bot/
+
+  holybot-eventhandler:
+    image: ./EventHandler/
+
+  holybot-frontend:
+    image: ./Site/frontend
+
+  holybot-backend:
+    image: ./Site/backend
