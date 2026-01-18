@@ -1,0 +1,9 @@
+.idea
+.thrashd
+.vscode
+.git
+
+__pycache__/
+venv/
+dist/
+*.egg-info

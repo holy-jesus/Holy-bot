@@ -1,27 +1,67 @@
 services:
-  
   holybot-db:
-    image: postgres:18.1-trixie
+    image: postgres:18.1-alpine
+    hostname: db
+    container_name: holybot-db
     restart: always
     shm_size: 128mb
     environment:
-      POSTGRES_PASSWORD: example
+      POSTGRES_INITDB_ARGS: --encoding=UTF-8 --lc-collate=C --lc-ctype=C
+      POSTGRES_USER: ${POSTGRES_USER:-holybot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-holybot}
+    networks:
+      - holybot
+    volumes:
+      - holybot-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U matrix"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   holybot-valkey:
-    image: valkey:9.0.1-trixie
+    image: valkey/valkey:9.0.1-alpine
+    hostname: valkey
+    container_name: holybot-valkey
     restart: always
+    networks:
+      - holybot
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
-  holybot-api:
-    image: ./API/
+  # holybot-api:
+  #   image: ./API/
+  #   networks:
+  #     - holybot
 
-  holybot-bot:
-    image: ./Bot/
+  # holybot-bot:
+  #   image: ./Bot/
+  #   networks:
+  #     - holybot
 
-  holybot-eventhandler:
-    image: ./EventHandler/
+  # holybot-eventhandler:
+  #   image: ./EventHandler/
+  #   networks:
+  #     - holybot
 
-  holybot-frontend:
-    image: ./Site/frontend
+  # holybot-frontend:
+  #   image: ./Site/frontend
+  #   networks:
+  #     - holybot
 
-  holybot-backend:
-    image: ./Site/backend
+  # holybot-backend:
+  #   image: ./Site/backend
+  #   networks:
+  #     - holybot
+
+networks:
+  holybot:
+    name: holybot
+
+volumes:
+  holybot-db:
+    name: holybot-db

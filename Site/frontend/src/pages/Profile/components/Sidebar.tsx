@@ -8,7 +8,7 @@ import {
   LogOut,
   Bot,
 } from "lucide-react";
-import { useLanguage } from "../contexts/LanguageContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export const Sidebar: React.FC = ({}) => {
   const { t } = useLanguage();

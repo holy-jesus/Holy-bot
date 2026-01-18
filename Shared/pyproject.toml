@@ -1,0 +1,15 @@
+[project]
+name = "holybot-shared"
+version = "0.1.0"
+requires-python = ">=3.11"
+
+dependencies = [
+  "SQLAlchemy~=2.0.45",
+  "alembic~=1.18.1",
+  "pydantic~=2.12.5",
+  "psycopg[binary,pool]~=3.3.2",
+  "loguru~=0.7.3",
+]
+
+[tool.setuptools.packages]
+find = {include = ["Shared", "Shared.*"], exclude = ["alembic"]}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Menu, Bell, User as UserIcon, Search, Globe } from "lucide-react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router";
 import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
-import { Sidebar } from "@/components/Sidebar";
+import { Sidebar } from "@/pages/Profile/components/Sidebar";
 import { BotStatus } from "@/types";
 
 export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({

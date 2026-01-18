@@ -11,51 +11,7 @@ import { AskAi } from "@/pages/Profile/AI/AskAi";
 import { Commands } from "@/pages/Profile/Commands/Commands";
 import { Menu, Bell, User as UserIcon, Search, Globe } from "lucide-react";
 import { BotStatus } from "@/types";
-import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
-
-const AppContent: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activePage, setActivePage] = useState("overview");
-  const { language, setLanguage } = useLanguage();
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setActivePage("overview");
-  };
-
-  // Main Dashboard Layout Wrapper
-
-  // Render specific content based on activePage state (Client-side simple routing for demo)
-  const renderContent = () => {
-    switch (activePage) {
-      case "overview":
-        return;
-      case "commands":
-        return <Commands />;
-      case "timers":
-        return <Timers />;
-      case "moderators":
-        return <Moderators />;
-      case "ai-chat":
-        return <AskAi />;
-      default:
-        return (
-          <div className="text-center text-slate-500 mt-20">
-            Page not found or under construction.
-          </div>
-        );
-    }
-  };
-
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />}></Route>
-      </Routes>
-    </BrowserRouter>
-  );
-};
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 const router = createBrowserRouter([
   {
@@ -77,6 +33,14 @@ const router = createBrowserRouter([
       {
         path: "commands",
         element: <Commands />,
+      },
+      {
+        path: "moderators",
+        element: <Moderators />,
+      },
+      {
+        path: "ai",
+        element: <AskAi />,
       },
     ],
   },

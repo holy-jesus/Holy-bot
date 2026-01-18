@@ -1,0 +1,5 @@
+SQLAlchemy~=2.0.45
+alembic~=1.18.1
+pydantic~=2.12.5
+psycopg[binary,pool]~=3.3.2
+loguru~=0.7.3
