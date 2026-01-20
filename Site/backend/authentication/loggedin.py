@@ -4,7 +4,7 @@ from fastapi import Request, Response
 from fastapi.routing import APIRoute
 from fastapi.responses import RedirectResponse
 
-from .token import verify_session, set_token_cookie
+from .session import verify_session, set_token_cookie
 
 
 class LoggedIn(APIRoute):

@@ -1,1 +1,0 @@
-/home/user/projects/holy_bot/KafkaClient/client.py

@@ -15,8 +15,12 @@ services:
     volumes:
       - holybot-db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U matrix"]
-      interval: 5s
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-holybot} -d ${POSTGRES_DB:-holybot}",
+        ]
+      interval: 10s
       timeout: 5s
       retries: 5
 
@@ -28,35 +32,123 @@ services:
     networks:
       - holybot
     healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
+      test: [ "CMD", "valkey-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 3
 
-  # holybot-api:
-  #   image: ./API/
-  #   networks:
-  #     - holybot
+  holybot-nats:
+    image: nats:2.12.3-alpine
+    hostname: nats
+    container_name: holybot-nats
+    restart: always
+    networks:
+      - holybot
+    volumes:
+      - ./configs/nats.conf:/etc/nats/nats-server.conf
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://127.0.0.1:8222/healthz" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
-  # holybot-bot:
-  #   image: ./Bot/
+  # holybot-migrator:
+  #   build:
+  #     context: ./Shared
+  #     dockerfile: Dockerfile
+  #   container_name: holybot-migrator
   #   networks:
   #     - holybot
+  #   command: ["alembic", "upgrade", "head"]
+  #   depends_on:
+  #     holybot-db:
+  #       condition: service_healthy
+  #   restart: "no"
+
+  #   holybot-api:
+  #     build:
+  #       context: ./API
+  #       dockerfile: Dockerfile
+  #     networks:
+  #       - holybot
+  #     depends_on:
+  #       holybot-migrator:
+  #         condition: service_completed_successfully
+  #       holybot-db:
+  #         condition: service_healthy
+  #       holybot-valkey:
+  #         condition: service_healthy
+  #       holybot-nats:
+  #         condition: service_healthy
 
   # holybot-eventhandler:
-  #   image: ./EventHandler/
+  #   build:
+  #     context: ./EventHandler
+  #     dockerfile: Dockerfile
   #   networks:
   #     - holybot
+  #   depends_on:
+  #     holybot-migrator:
+  #       condition: service_completed_successfully
+  #     holybot-db:
+  #       condition: service_healthy
+  #     holybot-valkey:
+  #       condition: service_healthy
+  #     holybot-api:
+  #       condition: service_healthy
+  #     holybot-nats:
+  #       condition: service_healthy
 
   # holybot-frontend:
-  #   image: ./Site/frontend
+  #   build:
+  #     context: ./Site/frontend
+  #     dockerfile: Dockerfile
   #   networks:
   #     - holybot
+  #   depends_on:
+  #     holybot-migrator:
+  #       condition: service_completed_successfully
+  #     holybot-db:
+  #       condition: service_healthy
+  #     holybot-valkey:
+  #       condition: service_healthy
 
-  # holybot-backend:
-  #   image: ./Site/backend
+#  holybot-backend:
+#    build:
+#      context: ./Site/backend
+#      dockerfile: Dockerfile
+#    hostname: backend
+#    container_name: holybot-backend
+#    restart: always
+#    networks:
+#      - holybot
+#    depends_on:
+#      holybot-migrator:
+#        condition: service_completed_successfully
+#      holybot-db:
+#        condition: service_healthy
+#      holybot-valkey:
+#        condition: service_healthy
+#      holybot-nats:
+#        condition: service_healthy
+#      holybot-api:
+#        condition: service_healthy
+
+  # holybot-bot:
+  #   build:
+  #     context: ./Bot
+  #     dockerfile: Dockerfile
   #   networks:
   #     - holybot
+  #   depends_on:
+  #     holybot-migrator:
+  #       condition: service_completed_successfully
+  #     holybot-db:
+  #       condition: service_healthy
+  #     holybot-valkey:
+  #       condition: service_healthy
+  #     holybot-nats:
+  #       condition: service_healthy
 
 networks:
   holybot:

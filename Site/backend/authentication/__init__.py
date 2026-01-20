@@ -1,2 +1,2 @@
 from .loggedin import LoggedIn
-from .token import create_session, verify_session
+from .session import create_session, verify_session

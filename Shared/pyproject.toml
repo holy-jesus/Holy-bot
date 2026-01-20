@@ -1,15 +1,20 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "holybot-shared"
-version = "0.1.0"
+version = "0.0.0"
 requires-python = ">=3.11"
 
 dependencies = [
-  "SQLAlchemy~=2.0.45",
-  "alembic~=1.18.1",
+  "SQLAlchemy[asyncio]~=2.0.45",
   "pydantic~=2.12.5",
   "psycopg[binary,pool]~=3.3.2",
   "loguru~=0.7.3",
+  "valkey[libvalkey]~=6.1.1",
+  "orjson~=3.11.5"
 ]
 
 [tool.setuptools.packages]
-find = {include = ["Shared", "Shared.*"], exclude = ["alembic"]}
+find = {where = ["."], include = ["holybot_shared*"], exclude = ["alembic"]}

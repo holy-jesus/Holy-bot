@@ -1,9 +1,11 @@
+import os
 from logging.config import fileConfig
 
-from Shared import models
-from sqlalchemy import engine_from_config, pool
-
 from alembic import context
+from sqlalchemy import engine_from_config, pool
+from sqlalchemy.engine.url import URL
+
+from Shared.holybot_shared import models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -38,9 +40,16 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    db_url = URL.create(
+        drivername="postgresql",
+        username=os.getenv("POSTGRES_USER"),
+        password=os.getenv("POSTGRES_PASSWORD"),
+        host=os.getenv("POSTGRES_HOST", "localhost"),
+        port=os.getenv("POSTGRES_PORT", 5432),
+        database=os.getenv("POSTGRES_DB"),
+    )
     context.configure(
-        url=url,
+        url=db_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},

@@ -6,6 +6,6 @@ COPY ./requirements.txt /app/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
-COPY . .
+COPY alembic/* .
 
-CMD ["fastapi", "run", "main.py", "--port", "80", "--proxy-headers"]
+CMD ["alembic", "upgrade", "head"]

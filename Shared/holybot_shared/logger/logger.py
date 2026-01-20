@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime, timezone
 
+from loguru import logger
 
 class ValkeyHandler(logging.Handler):
     def __init__(self, client, key="logs", timeout=0.01):
