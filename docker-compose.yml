@@ -1,7 +1,7 @@
 services:
   holybot-db:
     image: postgres:18.1-alpine
-    hostname: db
+    hostname: postgres
     container_name: holybot-db
     restart: always
     shm_size: 128mb
@@ -14,6 +14,8 @@ services:
       - holybot
     volumes:
       - holybot-db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     healthcheck:
       test:
         [
@@ -52,18 +54,44 @@ services:
       timeout: 5s
       retries: 3
 
-  # holybot-migrator:
-  #   build:
-  #     context: ./Shared
-  #     dockerfile: Dockerfile
-  #   container_name: holybot-migrator
-  #   networks:
-  #     - holybot
-  #   command: ["alembic", "upgrade", "head"]
-  #   depends_on:
-  #     holybot-db:
-  #       condition: service_healthy
-  #   restart: "no"
+  holybot-migrator:
+    build:
+      context: .
+      dockerfile: Shared/Dockerfile
+    container_name: holybot-migrator
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-holybot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-holybot}
+    networks:
+      - holybot
+    depends_on:
+      holybot-db:
+        condition: service_healthy
+    restart: "no"
+
+  #  holybot-backend:
+  #    build:
+  #      context: ./Site/backend
+  #      dockerfile: Dockerfile
+  #    hostname: backend
+  #    container_name: holybot-backend
+  #    restart: always
+  #    networks:
+  #      - holybot
+  #    depends_on:
+  #      holybot-migrator:
+  #        condition: service_completed_successfully
+  #      holybot-db:
+  #        condition: service_healthy
+  #      holybot-valkey:
+  #        condition: service_healthy
+  #      holybot-nats:
+  #        condition: service_healthy
+  #      holybot-api:
+  #        condition: service_healthy
 
   #   holybot-api:
   #     build:
@@ -112,27 +140,6 @@ services:
   #       condition: service_healthy
   #     holybot-valkey:
   #       condition: service_healthy
-
-#  holybot-backend:
-#    build:
-#      context: ./Site/backend
-#      dockerfile: Dockerfile
-#    hostname: backend
-#    container_name: holybot-backend
-#    restart: always
-#    networks:
-#      - holybot
-#    depends_on:
-#      holybot-migrator:
-#        condition: service_completed_successfully
-#      holybot-db:
-#        condition: service_healthy
-#      holybot-valkey:
-#        condition: service_healthy
-#      holybot-nats:
-#        condition: service_healthy
-#      holybot-api:
-#        condition: service_healthy
 
   # holybot-bot:
   #   build:

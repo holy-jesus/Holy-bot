@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING
-from uuid import uuid7
+from uuid import uuid7, UUID
 import datetime
 
+from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import UUID
 
 from .base import Base
 
@@ -15,16 +15,15 @@ if TYPE_CHECKING:
 class User(Base):
     __tablename__ = "user"
 
-    # id: Mapped[str] = mapped_column(primary_key=True)
     id: Mapped[UUID] = mapped_column(primary_key=True, unique=True, default=uuid7)
     email: Mapped[str]
     username: Mapped[str]
 
     password_hash: Mapped[str | None] = mapped_column(nullable=True)
 
-    created_at: Mapped[datetime.datetime]
-    updated_at: Mapped[datetime.datetime]
-    last_login_at: Mapped[datetime.datetime]
+    created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(), server_onupdate=func.now())
+    # last_login_at: Mapped[datetime.datetime]
 
     sessions: Mapped[list["Session"]] = relationship(
         back_populates="user",

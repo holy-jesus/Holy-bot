@@ -1,5 +1,5 @@
 .idea
-.thrashd
+.thrash
 .vscode
 .git
 
@@ -7,3 +7,4 @@ __pycache__/
 venv/
 dist/
 *.egg-info
+node_modules/

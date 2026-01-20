@@ -5,7 +5,7 @@ from sqlalchemy.engine.url import URL
 
 
 url = URL.create(
-    drivername="postgresql",
+    drivername="postgresql+asyncpg",
     username=os.getenv("POSTGRES_USER", "holybot"),
     password=os.getenv("POSTGRES_PASSWORD", "password"),
     host=os.getenv("POSTGRES_HOST", "localhost"),

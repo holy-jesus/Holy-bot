@@ -1,7 +1,8 @@
 import datetime
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 from uuid import uuid7
 
+from sqlalchemy import JSON, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -18,10 +19,10 @@ class TwitchToken(Base):
     encrypted_token: Mapped[str]
     encrypted_refresh_token: Mapped[str]
     expires_at: Mapped[datetime.datetime]
-    scopes: Mapped[List[str]]
+    scopes: Mapped[list[str]] = mapped_column(JSON, default=list)
 
-    created_at: Mapped[datetime.datetime]
-    updated_at: Mapped[datetime.datetime]
+    created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(), server_onupdate=func.now())
 
     user: Mapped["User"] = relationship(
         back_populates="twitch_token"

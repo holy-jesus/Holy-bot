@@ -1,5 +1,8 @@
 SQLAlchemy~=2.0.45
 pydantic~=2.12.5
-psycopg[binary,pool]~=3.3.2
+# psycopg[binary,pool]~=3.3.2
+asyncpg~=0.31.0
 loguru~=0.7.3
 valkey[libvalkey]~=6.1.1
+orjson~=3.11.5
+nats-py~=2.12.0
