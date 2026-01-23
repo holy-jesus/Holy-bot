@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from Site.backend.auth.csrf import check_csrf_token
 from Site.backend.auth.session import create_temp_session
-from Site.backend.auth.cookie import set_temp_session_cookie
 from Site.backend.auth.user import email_already_exists, username_already_exists
 from Site.backend.auth.email import send_email
 from Site.backend.deps import get_db_session
@@ -30,28 +29,35 @@ async def register_user(
     if not await check_csrf_token(x_csrf_token, request.app.state.valkey):
         raise HTTPException(status_code=403, detail="CSRF token is invalid")
 
-    if await email_already_exists(user.email, db):
-        raise HTTPException(status_code=409, detail="Email already registered")
+    async with db.begin():
+        if await email_already_exists(user.email, db):
+            raise HTTPException(status_code=409, detail="Email already registered")
 
-    if await username_already_exists(user.username, db):
-        raise HTTPException(status_code=409, detail="Username already registered")
+        if await username_already_exists(user.username, db):
+            raise HTTPException(status_code=409, detail="Username already registered")
 
-    verification_code = secrets.token_hex(8)
+        verification_code = secrets.token_hex(8)
 
-    email_sent = await send_email(user.email, verification_code)
-    if not email_sent:
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to send verification email",
+        email_sent = await send_email(user.email, verification_code)
+        if not email_sent:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to send verification email",
+            )
+
+        temp_session = await create_temp_session(
+            verification_code=verification_code,
+            user=user,
+            db=db,
         )
 
-    temp_session = await create_temp_session(
-        verification_code=verification_code,
-        user=user,
-        db=db,
+    response.set_cookie(
+        key="temp_session",
+        value=temp_session.id,
+        max_age=3600,
+        secure=True,
+        samesite="lax",
     )
-
-    set_temp_session_cookie(response, temp_session)
     response.delete_cookie("csrf")
 
     return {"status": "verification_required"}

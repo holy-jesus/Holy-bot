@@ -14,7 +14,7 @@ import { Button } from "@/components/Button";
 import { Command, CommandMode } from "@/types";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { VisualEditor } from "@/pages/Profile/Commands/components/VisualEditor";
-import { generateCommandConfig } from "@/services/geminiService";
+// import { generateCommandConfig } from "@/services/geminiService";
 
 export const Commands: React.FC = () => {
   const { t } = useLanguage();
@@ -83,26 +83,7 @@ export const Commands: React.FC = () => {
   };
 
   const handleAiGenerate = async () => {
-    if (!aiGenPrompt) return;
-    setIsGenerating(true);
-    const config = await generateCommandConfig(aiGenPrompt);
-    setIsGenerating(false);
 
-    if (config) {
-      setCurrentCommand({
-        ...currentCommand,
-        name: config.name,
-        trigger: config.trigger,
-        mode: config.mode as CommandMode,
-        response: config.response,
-        aiPrompt: config.aiPrompt,
-        cooldown: config.cooldown,
-        active: true,
-      });
-      setShowAiGen(false);
-      setIsEditing(true);
-      setAiGenPrompt("");
-    }
   };
 
   // Memoized update handler for VisualEditor to ensure stability
@@ -403,12 +384,11 @@ export const Commands: React.FC = () => {
               <div className="flex items-center gap-4">
                 <div
                   className={`w-12 h-12 rounded-lg flex items-center justify-center
-                    ${
-                      cmd.mode === "basic"
-                        ? "bg-brand-500/10 text-brand-400"
-                        : cmd.mode === "ai"
-                          ? "bg-purple-500/10 text-purple-400"
-                          : "bg-emerald-500/10 text-emerald-400"
+                    ${cmd.mode === "basic"
+                      ? "bg-brand-500/10 text-brand-400"
+                      : cmd.mode === "ai"
+                        ? "bg-purple-500/10 text-purple-400"
+                        : "bg-emerald-500/10 text-emerald-400"
                     }`}
                 >
                   {cmd.mode === "basic" ? (
@@ -424,12 +404,11 @@ export const Commands: React.FC = () => {
                   <div className="flex items-center gap-2 mt-1">
                     <span
                       className={`text-xs px-2 py-0.5 rounded border
-                        ${
-                          cmd.mode === "basic"
-                            ? "border-brand-500/30 text-brand-400 bg-brand-500/5"
-                            : cmd.mode === "ai"
-                              ? "border-purple-500/30 text-purple-400 bg-purple-500/5"
-                              : "border-emerald-500/30 text-emerald-400 bg-emerald-500/5"
+                        ${cmd.mode === "basic"
+                          ? "border-brand-500/30 text-brand-400 bg-brand-500/5"
+                          : cmd.mode === "ai"
+                            ? "border-purple-500/30 text-purple-400 bg-purple-500/5"
+                            : "border-emerald-500/30 text-emerald-400 bg-emerald-500/5"
                         }`}
                     >
                       {cmd.mode === "basic"

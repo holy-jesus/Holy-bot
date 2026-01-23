@@ -14,17 +14,17 @@ SESSION_REFRESH = timedelta(days=int(os.getenv("SESSION_REFRESH_DAYS", "5")))
 
 
 async def create_session(user: User, db: AsyncSession) -> Session:
-    async with db.begin():
+    new_session_token = secrets.token_urlsafe(32)
+    while await db.scalar(select(exists().where(Session.id == new_session_token))):
         new_session_token = secrets.token_urlsafe(32)
-        while await db.scalar(select(exists().where(Session.id == new_session_token))):
-            new_session_token = secrets.token_urlsafe(32)
 
-        session = Session(
-            id=new_session_token,
-            user=user,
-        )
+    session = Session(
+        id=new_session_token,
+        user=user,
+    )
 
-        db.add(session)
+    db.add(session)
+    await db.flush()
 
     return session
 
@@ -63,14 +63,14 @@ async def get_user_by_session(session_obj: Session, db: AsyncSession) -> User | 
 async def create_temp_session(
     verification_code: str, user: UserCreate, db: AsyncSession
 ) -> TempSession:
-    async with db.begin():
-        temp_session = TempSession(
-            id=secrets.token_urlsafe(32),
-            username=user.username,
-            email=user.email,
-            password_hash=sha256(user.password.encode()).digest().hex(),
-            verification_code=sha256(verification_code.encode()).digest().hex(),
-        )
+    temp_session = TempSession(
+        id=secrets.token_urlsafe(32),
+        username=user.username,
+        email=user.email,
+        password_hash=sha256(user.password.encode()).digest().hex(),
+        verification_code_hash=sha256(verification_code.encode()).digest().hex(),
+    )
 
-        db.add(temp_session)
+    db.add(temp_session)
+    await db.flush()
     return temp_session

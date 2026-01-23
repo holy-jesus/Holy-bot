@@ -2,24 +2,27 @@ import React, { useState } from 'react';
 import { Mail, Lock, User } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { register } from '@/services/auth';
+
 interface RegisterFormProps {
   onSuccess: () => void;
   onSwitchToLogin: () => void;
 }
+
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin }) => {
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
-  // Form states
+
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Mocking API delays
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    onSuccess(); // Switch to verify
+
+    await register(email, username, password);
+    onSuccess();
+
     setIsLoading(false);
   };
   return (

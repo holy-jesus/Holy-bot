@@ -19,7 +19,8 @@ class LoggedIn(APIRoute):
                 session = request.cookies.get("session")
                 if not session:
                     return redirect_response
-                is_updated, session_obj = await get_session(session, db)
+                async with db.begin():
+                    is_updated, session_obj = await get_session(session, db)
                 if is_updated and session_obj is None:
                     redirect_response.delete_cookie("session")
                     return redirect_response

@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Sparkles } from "lucide-react";
-import { generateBotResponse } from "@/services/geminiService";
 
 interface Message {
   id: string;
@@ -46,14 +45,14 @@ export const AskAi: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const botResponseText = await generateBotResponse(userMsg.text);
-      const botMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "bot",
-        text: botResponseText,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, botMsg]);
+      // const botResponseText = await generateBotResponse(userMsg.text);
+      // const botMsg: Message = {
+      //   id: (Date.now() + 1).toString(),
+      //   role: "bot",
+      //   text: botResponseText,
+      //   timestamp: new Date(),
+      // };
+      // setMessages((prev) => [...prev, botMsg]);
     } catch (error) {
       console.error(error);
     } finally {
@@ -84,11 +83,10 @@ export const AskAi: React.FC = () => {
             <div
               className={`
               flex max-w-[80%] rounded-2xl p-4 shadow-sm
-              ${
-                msg.role === "user"
+              ${msg.role === "user"
                   ? "bg-brand-600 text-white rounded-tr-none"
                   : "bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700"
-              }
+                }
             `}
             >
               <div className="mr-3 mt-1 min-w-[20px]">

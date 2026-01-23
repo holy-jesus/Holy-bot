@@ -80,21 +80,33 @@ services:
     build:
       context: ./
       dockerfile: Site/frontend/Dockerfile
+      args:
+        VITE_BACKEND_PUBLIC_DOMAIN: ${BACKEND_PUBLIC_DOMAIN}
+        VITE_BACKEND_PATH: ${BACKEND_PATH}
     hostname: nginx
     container_name: holybot-nginx
     networks:
       - holybot
     environment:
+      # Nginx
+      NGINX_LISTEN_PORT: ${NGINX_LISTEN_PORT:-80}
+      FRONTEND_DOMAIN: ${FRONTEND_DOMAIN}
+      BACKEND_DOMAIN: ${BACKEND_PUBLIC_DOMAIN}
+      BACKEND_HOST: ${BACKEND_HOST:-backend}
+      BACKEND_PORT: ${BACKEND_PORT:-80}
+      BACKEND_PATH: ${BACKEND_PATH:-/api/}
+
+      # Frontend
       # VITE_TWITCH_CLIENT_ID: ${TWITCH_APP_ID}
       # VITE_TWITCH_SCOPES: ${TWITCH_SCOPES}
-      VITE_BACKEND_DOMAIN: ${BACKEND_DOMAIN}
+      VITE_APP_ENV: ${APP_ENV:-production}
+      VITE_BACKEND_PUBLIC_DOMAIN: ${BACKEND_PUBLIC_DOMAIN}
       VITE_BACKEND_PATH: ${BACKEND_PATH}
-      NGINX_LISTEN_PORT: ${NGINX_LISTEN_PORT:-80}
     ports:
       # Host:Container
       - "8880:${NGINX_LISTEN_PORT}"
     volumes:
-      - ./configs/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./configs/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
     depends_on:
       holybot-migrator:
         condition: service_completed_successfully
@@ -118,8 +130,14 @@ services:
     container_name: holybot-backend
     restart: always
     environment:
-      DOMAIN: ${DOMAIN}
+      DOMAIN: ${BACKEND_PUBLIC_DOMAIN}
       VALKEY_URL: ${VALKEY_URL:-valkey://valkey}
+
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-holybot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-holybot}
     networks:
       - holybot
 #    ports:

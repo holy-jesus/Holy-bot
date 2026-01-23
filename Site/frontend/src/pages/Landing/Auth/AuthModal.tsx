@@ -4,16 +4,23 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
 import { VerifyForm } from './VerifyForm';
+import { getCSRFToken } from "@/services/auth";
+
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   initialMode?: 'login' | 'register';
 }
+
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, initialMode = 'login' }) => {
   const { t } = useLanguage();
   const [mode, setMode] = useState<'login' | 'register' | 'verify'>(initialMode);
+
+  getCSRFToken();
+
   if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -41,14 +48,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             </div>
           </div>
           {mode === 'login' ? (
-            <LoginForm 
-              onSuccess={onSuccess} 
-              onSwitchToRegister={() => setMode('register')} 
+            <LoginForm
+              onSuccess={onSuccess}
+              onSwitchToRegister={() => setMode('register')}
             />
           ) : mode === 'register' ? (
-            <RegisterForm 
-              onSuccess={() => setMode('verify')} 
-              onSwitchToLogin={() => setMode('login')} 
+            <RegisterForm
+              onSuccess={() => setMode('verify')}
+              onSwitchToLogin={() => setMode('login')}
             />
           ) : (
             <VerifyForm onSuccess={onSuccess} />

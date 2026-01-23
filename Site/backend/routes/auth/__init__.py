@@ -1,7 +1,9 @@
 from .auth import auth
 
-import login
-import logout
-import register
+from .csrf import *
+from .login import *
+from .logout import *
+from .register import *
+
 
 __all__ = [auth]

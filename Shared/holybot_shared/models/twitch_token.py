@@ -1,8 +1,8 @@
 import datetime
 from typing import TYPE_CHECKING
-from uuid import uuid7
+from uuid import uuid7, UUID
 
-from sqlalchemy import JSON, func
+from sqlalchemy import JSON, func, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -24,6 +24,7 @@ class TwitchToken(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(), server_onupdate=func.now())
 
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
     user: Mapped["User"] = relationship(
         back_populates="twitch_token"
     )

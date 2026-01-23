@@ -11,10 +11,8 @@ import {
   DollarSign,
   UserPlus,
 } from "lucide-react";
-import GlitchIcon from "@/assets/icons/glitch_flat_white.svg?react";
 import { Button } from "@/components/Button";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { redirectToTwitch } from "@/services/auth";
 import { AuthModal } from "./Auth/AuthModal";
 
 export const LandingPage: React.FC = () => {
