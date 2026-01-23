@@ -85,13 +85,13 @@ services:
     networks:
       - holybot
     environment:
-      VITE_TWITCH_CLIENT_ID: ${TWITCH_APP_ID}
-      VITE_TWITCH_SCOPES: ${TWITCH_SCOPES}
+      # VITE_TWITCH_CLIENT_ID: ${TWITCH_APP_ID}
+      # VITE_TWITCH_SCOPES: ${TWITCH_SCOPES}
       VITE_BACKEND_DOMAIN: ${BACKEND_DOMAIN}
       VITE_BACKEND_PATH: ${BACKEND_PATH}
       NGINX_LISTEN_PORT: ${NGINX_LISTEN_PORT:-80}
     ports:
-      # HOST:CONTAINER
+      # Host:Container
       - "8880:${NGINX_LISTEN_PORT}"
     volumes:
       - ./configs/nginx.conf:/etc/nginx/conf.d/default.conf:ro

@@ -1,37 +1,34 @@
 import axios from 'axios';
 
-const API_URL = '/api'; // Replace with your actual API URL
+const API_URL = `${import.meta.env.VITE_BACKEND_DOMAIN}${import.meta.env.VITE_BACKEND_PATH}`;
 
 const api = axios.create({
   baseURL: API_URL,
 });
 
-export const loginWithPassword = async (username, password) => {
-  // In a real app, you'd make a POST request to your API
-  console.log('Logging in with:', { username, password });
-  // Mock response
-  return { success: true, token: 'mock-jwt-token' };
+async function loginWithPassword(username: string, password: string) {
+  const response = await api.post('/auth/login', { username, password });
+  return response.data;
 };
 
-export const loginWithEmail = async (email) => {
-  // In a real app, you'd make a POST request to your API
-  console.log('Sending magic link to:', email);
-  // Mock response
-  return { success: true };
+async function loginWithEmail(email: string) {
+  const response = await api.post('/auth/login-with-email', { email });
+  return response.data;
 };
 
-export const register = async (email, username, password) => {
-  // In a real app, you'd make a POST request to your API
-  console.log('Registering with:', { email, username, password });
-  // Mock response
-  return { success: true };
+async function register(email: string, username: string, password: string) {
+  const response = await api.post('/auth/register', { email, username, password });
+  return response.data;
 };
 
-export const verifyEmail = async (code) => {
-  // In a real app, you'd make a POST request to your API
-  console.log('Verifying email with code:', code);
-  // Mock response
-  return { success: true, token: 'mock-jwt-token' };
+async function verifyEmail(code: string) {
+  const response = await api.post('/auth/confirm-email', { code });
+  return response.data;
 };
 
-export default api;
+export {
+  loginWithPassword,
+  loginWithEmail,
+  register,
+  verifyEmail
+};
