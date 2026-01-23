@@ -14,6 +14,7 @@ services:
       - holybot
     volumes:
       - holybot-db:/var/lib/postgresql/data
+      # - ./postgres-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
@@ -31,8 +32,11 @@ services:
     hostname: valkey
     container_name: holybot-valkey
     restart: always
+    volumes:
+      - ./configs/valkey.conf:/valkey.conf:ro
     networks:
       - holybot
+    command: ["valkey-server", "/valkey.conf"]
     healthcheck:
       test: [ "CMD", "valkey-cli", "ping" ]
       interval: 10s
@@ -47,7 +51,7 @@ services:
     networks:
       - holybot
     volumes:
-      - ./configs/nats.conf:/etc/nats/nats-server.conf
+      - ./configs/nats.conf:/etc/nats/nats-server.conf:ro
     healthcheck:
       test: [ "CMD", "wget", "-q", "--spider", "http://127.0.0.1:8222/healthz" ]
       interval: 10s
@@ -70,28 +74,72 @@ services:
     depends_on:
       holybot-db:
         condition: service_healthy
-    restart: "no"
+    restart: no
 
-  #  holybot-backend:
-  #    build:
-  #      context: ./Site/backend
-  #      dockerfile: Dockerfile
-  #    hostname: backend
-  #    container_name: holybot-backend
-  #    restart: always
-  #    networks:
-  #      - holybot
-  #    depends_on:
-  #      holybot-migrator:
-  #        condition: service_completed_successfully
-  #      holybot-db:
-  #        condition: service_healthy
-  #      holybot-valkey:
-  #        condition: service_healthy
-  #      holybot-nats:
-  #        condition: service_healthy
+  holybot-nginx:
+    build:
+      context: ./
+      dockerfile: Site/frontend/Dockerfile
+    hostname: nginx
+    container_name: holybot-nginx
+    networks:
+      - holybot
+    environment:
+      VITE_TWITCH_CLIENT_ID: ${TWITCH_APP_ID}
+      VITE_TWITCH_SCOPES: ${TWITCH_SCOPES}
+      VITE_BACKEND_DOMAIN: ${BACKEND_DOMAIN}
+      VITE_BACKEND_PATH: ${BACKEND_PATH}
+      NGINX_LISTEN_PORT: ${NGINX_LISTEN_PORT:-80}
+    ports:
+      # HOST:CONTAINER
+      - "8880:${NGINX_LISTEN_PORT}"
+    volumes:
+      - ./configs/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      holybot-migrator:
+        condition: service_completed_successfully
+      holybot-db:
+        condition: service_healthy
+      holybot-valkey:
+        condition: service_healthy
+      holybot-backend:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://127.0.0.1:80/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  holybot-backend:
+    build:
+      context: .
+      dockerfile: Site/backend/Dockerfile
+    hostname: backend
+    container_name: holybot-backend
+    restart: always
+    environment:
+      DOMAIN: ${DOMAIN}
+      VALKEY_URL: ${VALKEY_URL:-valkey://valkey}
+    networks:
+      - holybot
+#    ports:
+#      - "8081:80"
+    depends_on:
+      holybot-db:
+        condition: service_healthy
+      holybot-valkey:
+        condition: service_healthy
+      holybot-nats:
+        condition: service_healthy
+      holybot-migrator:
+        condition: service_completed_successfully
   #      holybot-api:
   #        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://127.0.0.1:80/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   #   holybot-api:
   #     build:
@@ -109,9 +157,9 @@ services:
   #       holybot-nats:
   #         condition: service_healthy
 
-  # holybot-eventhandler:
+  # holybot-eventengine:
   #   build:
-  #     context: ./EventHandler
+  #     context: ./EventEngine
   #     dockerfile: Dockerfile
   #   networks:
   #     - holybot
@@ -125,20 +173,6 @@ services:
   #     holybot-api:
   #       condition: service_healthy
   #     holybot-nats:
-  #       condition: service_healthy
-
-  # holybot-frontend:
-  #   build:
-  #     context: ./Site/frontend
-  #     dockerfile: Dockerfile
-  #   networks:
-  #     - holybot
-  #   depends_on:
-  #     holybot-migrator:
-  #       condition: service_completed_successfully
-  #     holybot-db:
-  #       condition: service_healthy
-  #     holybot-valkey:
   #       condition: service_healthy
 
   # holybot-bot:

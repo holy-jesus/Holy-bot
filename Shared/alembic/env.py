@@ -42,12 +42,13 @@ def run_migrations_offline() -> None:
     """
     url = URL.create(
         drivername="postgresql+psycopg",
-        username=os.getenv("POSTGRES_USER"),
-        password=os.getenv("POSTGRES_PASSWORD"),
+        username=os.getenv("POSTGRES_USER", "holybot"),
+        password=os.getenv("POSTGRES_PASSWORD", "password"),
         host=os.getenv("POSTGRES_HOST", "postgres"),
         port=os.getenv("POSTGRES_PORT", 5432),
-        database=os.getenv("POSTGRES_DB"),
+        database=os.getenv("POSTGRES_DB", "holybot"),
     )
+
     context.configure(
         url=url,
         target_metadata=target_metadata,

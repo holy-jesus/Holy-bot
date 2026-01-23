@@ -16,7 +16,5 @@ class Session(Base):
     id: Mapped[str] = mapped_column(primary_key=True, unique=True, nullable=False)
 
     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
-    refresh: Mapped[datetime.datetime]
-    expires: Mapped[datetime.datetime]
 
     user: Mapped["User"] = relationship(back_populates="sessions")

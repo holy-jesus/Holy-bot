@@ -1,0 +1,76 @@
+import os
+import secrets
+from hashlib import sha256
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy import select, exists, delete
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from holybot_shared.models import User, Session, TempSession
+from Site.backend.models import UserCreate
+
+SESSION_LIFETIME = timedelta(days=int(os.getenv("SESSION_LIFETIME_DAYS", "7")))
+SESSION_REFRESH = timedelta(days=int(os.getenv("SESSION_REFRESH_DAYS", "5")))
+
+
+async def create_session(user: User, db: AsyncSession) -> Session:
+    async with db.begin():
+        new_session_token = secrets.token_urlsafe(32)
+        while await db.scalar(select(exists().where(Session.id == new_session_token))):
+            new_session_token = secrets.token_urlsafe(32)
+
+        session = Session(
+            id=new_session_token,
+            user=user,
+        )
+
+        db.add(session)
+
+    return session
+
+
+async def get_session(
+    session_token: str, db: AsyncSession
+) -> tuple[bool, Session | None]:
+    """
+    Находит сессию, обновляет или удаляет, если сессия устарела.
+
+    :param session_token: Сессия полученая от пользователя
+    :param db: AsyncSession
+    :return:
+    """
+    session: Session | None = (
+        await db.execute(select(Session).where(Session.id == session_token))
+    ).scalar_one_or_none()
+    if session is None:
+        return True, None
+    elif datetime.now(timezone.utc) >= (session.created_at + SESSION_LIFETIME):
+        await db.delete(session)
+        return True, None
+    elif datetime.now(timezone.utc) >= (session.created_at + SESSION_REFRESH):
+        return True, await create_session(session.user, db)
+    return False, session
+
+
+async def get_user_by_session(session_obj: Session, db: AsyncSession) -> User | None:
+    return (
+        await db.execute(
+            select(User).where(User.sessions.any(Session.id == session_obj.id))
+        )
+    ).scalar_one_or_none()
+
+
+async def create_temp_session(
+    verification_code: str, user: UserCreate, db: AsyncSession
+) -> TempSession:
+    async with db.begin():
+        temp_session = TempSession(
+            id=secrets.token_urlsafe(32),
+            username=user.username,
+            email=user.email,
+            password_hash=sha256(user.password.encode()).digest().hex(),
+            verification_code=sha256(verification_code.encode()).digest().hex(),
+        )
+
+        db.add(temp_session)
+    return temp_session
