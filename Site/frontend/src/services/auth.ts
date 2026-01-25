@@ -8,6 +8,11 @@ const api = axios.create({
   withCredentials: true,
 });
 
+async function isLoggedIn() {
+  const response = await api.get('/auth/me');
+  return response.status === 200;
+}
+
 async function loginWithPassword(username: string, password: string) {
   const response = await api.post('/auth/login', { username, password }, {
     headers: {
@@ -17,8 +22,17 @@ async function loginWithPassword(username: string, password: string) {
   return response.data;
 };
 
-async function loginWithEmail(email: string) {
-  const response = await api.post('/auth/login-with-email', { email }, {
+async function requestLoginCode(email: string) {
+  const response = await api.post('/auth/request-login-code', { email }, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  return response.data;
+}
+
+async function loginWithCode(code: string) {
+  const response = await api.post('/auth/login-with-code', { code }, {
     headers: {
       'Content-Type': 'application/json',
     },
@@ -59,8 +73,10 @@ async function getCSRFToken() {
 }
 
 export {
+  isLoggedIn,
+  requestLoginCode,
   loginWithPassword,
-  loginWithEmail,
+  loginWithCode,
   register,
   verifyEmail,
   logout,

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Lock, User, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { loginWithPassword, loginWithEmail, verifyEmail } from '@/services/auth';
+import { loginWithPassword, requestLoginCode, loginWithCode } from '@/services/auth';
 import { toast } from 'sonner';
 interface LoginFormProps {
   onSuccess: () => void;
@@ -38,11 +38,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
             setIsLoading(false);
             return;
           }
-          await loginWithEmail(email);
+          await requestLoginCode(email);
           setIsCodeSent(true);
           toast.success(t('auth.codeSentSuccess'));
         } else {
-          await verifyEmail(verifyCode);
+          await loginWithCode(verifyCode);
           onSuccess();
         }
       }
@@ -125,7 +125,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
                 <input
                   required
                   type="text"
-                  maxLength={6}
                   placeholder={t('auth.code')}
                   value={verifyCode}
                   onChange={e => setVerifyCode(e.target.value)}

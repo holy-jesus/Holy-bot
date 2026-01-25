@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select, exists, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from holybot_shared.db_models import User, Session, TempSession
 from Site.backend.models import UserCreate
@@ -41,14 +42,22 @@ async def get_session(
     :return:
     """
     session: Session | None = (
-        await db.execute(select(Session).where(Session.id == session_token))
+        await db.execute(
+            select(Session)
+            .where(Session.id == session_token)
+            .options(selectinload(Session.user))
+        )
     ).scalar_one_or_none()
     if session is None:
         return True, None
-    elif datetime.now(timezone.utc) >= (session.created_at + SESSION_LIFETIME):
+    elif datetime.now(timezone.utc) >= (
+        session.created_at + SESSION_LIFETIME
+    ).astimezone(timezone.utc):
         await db.delete(session)
         return True, None
-    elif datetime.now(timezone.utc) >= (session.created_at + SESSION_REFRESH):
+    elif datetime.now(timezone.utc) >= (
+        session.created_at + SESSION_REFRESH
+    ).astimezone(timezone.utc):
         await db.delete(session)
         return True, await create_session(session.user, db)
     return False, session

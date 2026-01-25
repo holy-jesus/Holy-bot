@@ -37,7 +37,7 @@ export const translations = {
       pricing: "Pricing",
       about: "About",
       signIn: "Sign In",
-      heroBadge: "v3.0 is now live with AI features",
+      heroBadge: "v3.0 is now live",
       heroTitle: "The divine solution for your stream.",
       heroDesc:
         "Powerful moderation, advanced analytics, and AI-powered interaction tools to take your Twitch community to the next level. Setup takes less than 30 seconds.",
@@ -177,7 +177,7 @@ export const translations = {
       pricing: "Цены",
       about: "О нас",
       signIn: "Войти",
-      heroBadge: "Версия 3.0 с ИИ уже доступна",
+      heroBadge: "Версия 3.0 уже доступна",
       heroTitle: "Божественное решение для вашего стрима.",
       heroDesc:
         "Мощная модерация, продвинутая аналитика и инструменты взаимодействия на базе ИИ, чтобы вывести ваше Twitch-сообщество на новый уровень. Настройка занимает менее 30 секунд.",

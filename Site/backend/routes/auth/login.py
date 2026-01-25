@@ -16,7 +16,7 @@ from Site.backend.services.auth.user import (
 )
 from Site.backend.services.auth.session import create_session, SESSION_LIFETIME
 from Site.backend.services.email import send_login_code
-from Site.backend.models import UserLoginWithPassword
+from Site.backend.models import UserLoginWithPassword, UserLoginWithEmail, UserLoginCode
 from Site.backend.services.auth.cookie import set_session_cookie
 from Site.backend.services.ratelimit import ratelimit
 from Site.backend.services.auth.password import verify_password
@@ -62,10 +62,11 @@ async def login_user(
 @auth.post("/request-login-code")
 async def request_login_code(
     request: Request,
-    email: EmailStr,
+    user_login: UserLoginWithEmail,
     db: AsyncSession = Depends(get_db_session),
 ):
     vk: valkey.Valkey = request.app.state.valkey
+    email = user_login.email
 
     is_email_ratelimited = await ratelimit(
         f"auth:login_code:ratelimit:{email}", LIMIT, WINDOW, vk
@@ -112,10 +113,11 @@ async def request_login_code(
 async def login_with_code(
     request: Request,
     response: Response,
-    code: str,
+    login_data: UserLoginCode,
     db: AsyncSession = Depends(get_db_session),
 ):
     vk: valkey.Valkey = request.app.state.valkey
+    code = login_data.code
 
     is_host_ratelimited = await ratelimit(
         f"auth:login_code:ratelimit:{request.client.host}", LIMIT, WINDOW, vk
@@ -135,7 +137,7 @@ async def login_with_code(
 
     login_request = json.loads(login_request_raw)
 
-    db_user = await get_user_by_id(int(login_request["user_id"]), db)
+    db_user = await get_user_by_id(login_request["user_id"], db)
     if not db_user:
         raise HTTPException(status_code=500, detail="Internal server error")
 

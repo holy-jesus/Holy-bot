@@ -23,6 +23,8 @@ services:
           "CMD-SHELL",
           "pg_isready -U ${POSTGRES_USER:-holybot} -d ${POSTGRES_DB:-holybot}",
         ]
+      start_period: 10s
+      start_interval: 2s
       interval: 10s
       timeout: 5s
       retries: 5
@@ -39,6 +41,8 @@ services:
     command: ["valkey-server", "/valkey.conf"]
     healthcheck:
       test: [ "CMD", "valkey-cli", "ping" ]
+      start_period: 6s
+      start_interval: 2s
       interval: 10s
       timeout: 5s
       retries: 3
@@ -54,6 +58,8 @@ services:
       - ./configs/nats.conf:/etc/nats/nats-server.conf:ro
     healthcheck:
       test: [ "CMD", "wget", "-q", "--spider", "http://127.0.0.1:8222/healthz" ]
+      start_period: 6s
+      start_interval: 2s
       interval: 10s
       timeout: 5s
       retries: 3
@@ -118,6 +124,8 @@ services:
         condition: service_healthy
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://127.0.0.1:80/" ]
+      start_period: 6s
+      start_interval: 2s
       interval: 10s
       timeout: 5s
       retries: 3
@@ -160,6 +168,8 @@ services:
   #        condition: service_healthy
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://127.0.0.1:80/health" ]
+      start_period: 6s
+      start_interval: 2s
       interval: 10s
       timeout: 5s
       retries: 3

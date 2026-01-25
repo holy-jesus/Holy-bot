@@ -14,7 +14,7 @@ async def username_already_exists(username: str, db: AsyncSession) -> bool:
     return bool(result.scalar_one_or_none())
 
 
-async def get_user_by_id(user_id: int, db: AsyncSession) -> User | None:
+async def get_user_by_id(user_id: str, db: AsyncSession) -> User | None:
     return (
         await db.execute(select(User).where(User.id == user_id))
     ).scalar_one_or_none()

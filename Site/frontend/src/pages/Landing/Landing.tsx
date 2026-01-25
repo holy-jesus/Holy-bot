@@ -14,25 +14,38 @@ import {
 import { Button } from "@/components/Button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AuthModal } from "./Auth/AuthModal";
+import { isLoggedIn } from "@/services/auth";
 
 export const LandingPage: React.FC = () => {
   const { t, language, setLanguage } = useLanguage();
 
-  /* Removed duplicate return */
   const [isAuthModalOpen, setIsAuthModalOpen] = React.useState(false);
   const [authMode, setAuthMode] = React.useState<'login' | 'register'>('login');
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [channelCount, setChannelCount] = React.useState<number | null>(null);
 
   React.useEffect(() => {
-    // Check if user is logged in
-    const authStatus = document.cookie.includes('session');
-    setIsAuthenticated(authStatus);
+    async function fetchStats() {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_PATH}/landing/channels`);
+        const data = await response.json();
+        setChannelCount(data.channels);
+      } catch (err) {
+        console.error("Failed to fetch channel count:", err);
+      }
+    }
+    async function checkAuth() {
+      const authStatus = await isLoggedIn();
+      setIsAuthenticated(authStatus);
+    }
+    fetchStats();
+    checkAuth();
   }, []);
 
-  const openAuth = (mode: 'login' | 'register') => {
+  function openAuth(mode: 'login' | 'register') {
     setAuthMode(mode);
     setIsAuthModalOpen(true);
-  };
+  }
 
   return (
     <>
@@ -128,7 +141,7 @@ export const LandingPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 size={16} className="text-brand-500" />
-                  <span>{t("landing.activeUsers")}</span>
+                  <span>{t("landing.activeUsers", { channels: channelCount ?? "..." })}</span>
                 </div>
               </div>
             </div>
@@ -261,7 +274,7 @@ export const LandingPage: React.FC = () => {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={() => { }}
+        onSuccess={() => { window.location.href = '/dashboard' }}
         initialMode={authMode}
       />
     </>

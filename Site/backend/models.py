@@ -14,3 +14,7 @@ class UserLoginWithPassword(BaseModel):
 
 class UserLoginWithEmail(BaseModel):
     email: EmailStr
+
+
+class UserLoginCode(BaseModel):
+    code: str

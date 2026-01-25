@@ -23,7 +23,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     localStorage.setItem('holybot_language', lang);
   };
 
-  const t = (path: string): string => {
+  const t = (path: string, variables?: Record<string, string | number>): string => {
     const keys = path.split('.');
     let current: any = translations[language];
     for (const key of keys) {
@@ -33,7 +33,14 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
       current = current[key];
     }
-    return current as string;
+
+    let result = current as string;
+    if (variables) {
+      Object.entries(variables).forEach(([key, value]) => {
+        result = result.replace(`$${key}`, value.toString());
+      });
+    }
+    return result;
   };
 
   return (

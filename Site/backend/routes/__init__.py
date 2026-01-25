@@ -1,3 +1,4 @@
 from .auth import auth
+from .landing import landing
 
-routes = (auth,)
+routes = (auth, landing)
