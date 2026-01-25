@@ -1,4 +1,4 @@
-import { Heart, Sparkles, DollarSign, ArrowRight, Construction, Send, Github } from 'lucide-react'
+import { Heart, DollarSign, ArrowRight, Construction, Send, Github } from 'lucide-react'
 
 function App() {
   return (
