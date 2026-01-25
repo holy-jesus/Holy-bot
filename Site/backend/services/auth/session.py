@@ -6,8 +6,9 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, exists, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from holybot_shared.models import User, Session, TempSession
+from holybot_shared.db_models import User, Session, TempSession
 from Site.backend.models import UserCreate
+from Site.backend.services.auth.password import hash_password
 
 SESSION_LIFETIME = timedelta(days=int(os.getenv("SESSION_LIFETIME_DAYS", "7")))
 SESSION_REFRESH = timedelta(days=int(os.getenv("SESSION_REFRESH_DAYS", "5")))
@@ -48,6 +49,7 @@ async def get_session(
         await db.delete(session)
         return True, None
     elif datetime.now(timezone.utc) >= (session.created_at + SESSION_REFRESH):
+        await db.delete(session)
         return True, await create_session(session.user, db)
     return False, session
 
@@ -67,10 +69,16 @@ async def create_temp_session(
         id=secrets.token_urlsafe(32),
         username=user.username,
         email=user.email,
-        password_hash=sha256(user.password.encode()).digest().hex(),
+        password_hash=hash_password(user.password),
         verification_code_hash=sha256(verification_code.encode()).digest().hex(),
     )
 
     db.add(temp_session)
     await db.flush()
     return temp_session
+
+
+async def get_temp_session(temp_token: str, db: AsyncSession) -> TempSession | None:
+    return (
+        await db.execute(select(TempSession).where(TempSession.id == temp_token))
+    ).scalar_one_or_none()

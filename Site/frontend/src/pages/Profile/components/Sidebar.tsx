@@ -9,8 +9,9 @@ import {
   Bot,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { logout } from "@/services/auth";
 
-export const Sidebar: React.FC = ({}) => {
+export const Sidebar: React.FC = ({ }) => {
   const { t } = useLanguage();
 
   const menuItems = [
@@ -63,10 +64,9 @@ export const Sidebar: React.FC = ({}) => {
               key={item.id}
               className={`
                 w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                ${
-                  true
-                    ? "bg-brand-500/10 text-brand-400 border border-brand-500/20 shadow-sm"
-                    : "text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+                ${true
+                  ? "bg-brand-500/10 text-brand-400 border border-brand-500/20 shadow-sm"
+                  : "text-slate-400 hover:text-slate-100 hover:bg-slate-800"
                 }
               `}
             >
@@ -83,7 +83,7 @@ export const Sidebar: React.FC = ({}) => {
         {/* User / Logout */}
         <div className="p-4 border-t border-slate-800">
           <button className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
-            <LogOut size={20} className="mr-3" />
+            <LogOut size={20} className="mr-3" onClick={logout} />
             {t("sidebar.signOut")}
           </button>
         </div>

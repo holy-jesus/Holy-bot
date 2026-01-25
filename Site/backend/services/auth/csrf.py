@@ -4,6 +4,7 @@ from time import time
 from datetime import timedelta
 
 import valkey.asyncio as valkey
+from Site.backend.services.ratelimit import ratelimit
 
 CSRF_TOKEN_LIFETIME = timedelta(
     minutes=int(os.getenv("CSRF_TOKEN_LIFETIME_MINUTES", "5"))
@@ -18,13 +19,14 @@ CSRF_RATE_LIMIT_MAX = int(os.getenv("CSRF_RATE_LIMIT_MAX", "5"))
 
 
 async def create_csrf_token(ip_address: str, vk: valkey.Valkey) -> str:
-    ratelimit_key = f"csrf:rl:{ip_address}"
+    is_ratelimited = await ratelimit(
+        f"csrf:ratelimit:{ip_address}",
+        CSRF_RATE_LIMIT_MAX,
+        CSRF_RATE_LIMIT_WINDOW.seconds,
+        vk,
+    )
 
-    current = await vk.incr(ratelimit_key)
-    if current == 1:
-        await vk.expire(ratelimit_key, CSRF_RATE_LIMIT_WINDOW.seconds)
-
-    if current > CSRF_RATE_LIMIT_MAX:
+    if is_ratelimited:
         raise RuntimeError("CSRF rate limit exceeded")
 
     csrf = secrets.token_urlsafe(32)

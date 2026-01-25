@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import Request, Response, Header, HTTPException
 from fastapi.responses import JSONResponse
 
-from Site.backend.auth.csrf import create_csrf_token
+from Site.backend.services.auth.csrf import create_csrf_token
 
 
 @auth.get("/csrf")

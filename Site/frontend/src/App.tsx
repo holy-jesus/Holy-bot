@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router";
+import { Toaster } from 'sonner';
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { LandingPage } from "@/pages/Landing/Landing";
@@ -49,6 +50,7 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <LanguageProvider>
+      <Toaster position="top-right" richColors theme="dark" />
       <RouterProvider router={router} />
     </LanguageProvider>
   );

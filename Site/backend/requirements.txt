@@ -1,1 +1,2 @@
 fastapi[standard]~=0.128.0
+argon2-cffi~=25.1.0

@@ -5,9 +5,7 @@ import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
 import { Sidebar } from "@/pages/Profile/components/Sidebar";
 import { BotStatus } from "@/types";
 
-export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const DashboardLayout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { language, setLanguage } = useLanguage();
 

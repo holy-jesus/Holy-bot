@@ -3,6 +3,7 @@ import { Mail, Lock, User } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { register } from '@/services/auth';
+import { toast } from 'sonner';
 
 interface RegisterFormProps {
   onSuccess: () => void;
@@ -16,12 +17,65 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const validatePassword = (password: string) => {
+    const hasLetter = /[a-zA-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    return {
+      isEmpty: password.length === 0,
+      isValid: password.length >= 8 && hasLetter && hasNumber,
+      isLongEnough: password.length >= 8,
+      hasLetterAndNumber: hasLetter && hasNumber
+    };
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateEmail(email)) {
+      toast.error(t('auth.errorEmail'));
+      return;
+    }
+
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isEmpty) {
+      if (!passwordValidation.isLongEnough) {
+        toast.error(t('auth.errorPasswordShort'));
+        return;
+      }
+      if (!passwordValidation.hasLetterAndNumber) {
+        toast.error(t('auth.errorPasswordWeak'));
+        return;
+      }
+    }
+
     setIsLoading(true);
 
-    await register(email, username, password);
-    onSuccess();
+    try {
+      const [status_code, data] = await register(email, username, password);
+      if (status_code === 202) {
+        onSuccess();
+      } else if (status_code === 409) {
+        toast.error(t('auth.errorUserExists'));
+      } else if (status_code === 429) {
+        toast.error(t('auth.errorTooManyRequests'));
+      } else {
+        toast.error(t('auth.errorGeneric'));
+      }
+    } catch (error: any) {
+      console.error('Registration failed:', error);
+      if (error.response?.status === 429) {
+        toast.error(t('auth.errorTooManyRequests'));
+      } else if (error.response?.status >= 500) {
+        toast.error(t('auth.errorServerError'));
+      } else {
+        toast.error(t('auth.errorGeneric'));
+      }
+    }
 
     setIsLoading(false);
   };

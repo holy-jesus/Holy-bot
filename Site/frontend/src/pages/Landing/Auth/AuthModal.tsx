@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Bot, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LoginForm } from './LoginForm';
@@ -17,9 +17,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const { t } = useLanguage();
   const [mode, setMode] = useState<'login' | 'register' | 'verify'>(initialMode);
 
-  getCSRFToken();
+  useEffect(() => {
+    if (isOpen) {
+      getCSRFToken();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
+
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">

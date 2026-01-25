@@ -4,7 +4,7 @@ from fastapi import Request, Response
 from fastapi.routing import APIRoute
 from fastapi.responses import RedirectResponse
 
-from holybot_shared.models.factory import async_session_factory
+from holybot_shared.db_models.factory import async_session_factory
 from .cookie import set_session_cookie
 from .session import get_session
 

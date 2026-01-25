@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { verifyEmail } from '@/services/auth';
+import { toast } from 'sonner';
 interface VerifyFormProps {
   onSuccess: () => void;
 }
@@ -11,11 +13,25 @@ export const VerifyForm: React.FC<VerifyFormProps> = ({ onSuccess }) => {
   const [verifyCode, setVerifyCode] = useState('');
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setIsLoading(true);
-    // Mocking API delays
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    onSuccess();
+    try {
+      await verifyEmail(verifyCode);
+      onSuccess();
+    } catch (error: any) {
+      console.error('Verification failed:', error);
+      const status = error.response?.status;
+
+      if (status === 401 || status === 400) {
+        toast.error(t('auth.invalidCode'));
+      } else if (status === 429) {
+        toast.error(t('auth.errorTooManyRequests'));
+      } else if (status >= 500) {
+        toast.error(t('auth.errorServerError'));
+      } else {
+        toast.error(t('auth.errorGeneric'));
+      }
+    }
     setIsLoading(false);
   };
   return (
@@ -27,22 +43,21 @@ export const VerifyForm: React.FC<VerifyFormProps> = ({ onSuccess }) => {
       </div>
       <form onSubmit={handleVerify} className="space-y-6">
         <div className="flex flex-col gap-4">
-           <input
-              required
-              type="text"
-              maxLength={6}
-              placeholder="000000"
-              value={verifyCode}
-              onChange={e => setVerifyCode(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl py-4 text-center text-3xl font-black tracking-[0.5em] text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
-            />
-            <p className="text-[10px] text-center text-slate-500 uppercase font-bold tracking-widest">{t('auth.resend')}</p>
+          <input
+            required
+            type="text"
+            value={verifyCode}
+            placeholder="abcdefghijklmnop"
+            onChange={e => setVerifyCode(e.target.value)}
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl py-4 text-center text-xl font-mono tracking-wider text-white focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 outline-none transition-all uppercase placeholder:text-slate-800"
+          />
+          <p className="text-[10px] text-center text-slate-500 uppercase font-bold tracking-widest">{t('auth.resend')}</p>
         </div>
         <Button
           type="submit"
           className="w-full py-4 text-sm font-bold"
-          disabled={isLoading || verifyCode.length < 6}
-          icon={isLoading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> : <ShieldCheck size={18}/>}
+          disabled={isLoading}
+          icon={isLoading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> : <ShieldCheck size={18} />}
         >
           {t('auth.verify')}
         </Button>

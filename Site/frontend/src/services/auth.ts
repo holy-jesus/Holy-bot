@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 
 const PROTOCOL = import.meta.env.VITE_APP_ENV === "production" ? "https" : "http";
 const API_URL = `${PROTOCOL}://${import.meta.env.VITE_BACKEND_PUBLIC_DOMAIN}${import.meta.env.VITE_BACKEND_PATH}`;
@@ -26,14 +26,14 @@ async function loginWithEmail(email: string) {
   return response.data;
 };
 
-async function register(email: string, username: string, password?: string) {
+async function register(email: string, username: string, password?: string): Promise<[number, AxiosResponse]> {
   const response = await api.post('/auth/register', { email, username, password }, {
     headers: {
       'Content-Type': 'application/json',
       'X-CSRF-Token': document.cookie.split('; ').find(row => row.startsWith('csrf='))?.split('=')[1] || '',
     },
   });
-  return response.data;
+  return [response.status, response.data];
 };
 
 async function verifyEmail(code: string) {
@@ -45,7 +45,15 @@ async function verifyEmail(code: string) {
   return response.data;
 };
 
+async function logout() {
+  await api.post('/auth/logout');
+  document.location = '/'
+};
+
 async function getCSRFToken() {
+  if (document.cookie.includes('csrf=')) {
+    return;
+  }
   const response = await api.get('/auth/csrf');
   return response.status === 200;
 }
@@ -55,5 +63,6 @@ export {
   loginWithEmail,
   register,
   verifyEmail,
+  logout,
   getCSRFToken
 };

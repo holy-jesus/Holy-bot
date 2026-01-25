@@ -21,6 +21,13 @@ export const LandingPage: React.FC = () => {
   /* Removed duplicate return */
   const [isAuthModalOpen, setIsAuthModalOpen] = React.useState(false);
   const [authMode, setAuthMode] = React.useState<'login' | 'register'>('login');
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+
+  React.useEffect(() => {
+    // Check if user is logged in
+    const authStatus = document.cookie.includes('session');
+    setIsAuthenticated(authStatus);
+  }, []);
 
   const openAuth = (mode: 'login' | 'register') => {
     setAuthMode(mode);
@@ -61,9 +68,15 @@ export const LandingPage: React.FC = () => {
                 {language.toUpperCase()}
               </button>
 
-              <Button size="sm" variant="secondary" className="hidden md:flex" onClick={() => openAuth('login')}>
-                {t('landing.signIn')}
-              </Button>
+              {isAuthenticated ? (
+                <Button size="sm" variant="secondary" className="hidden md:flex" onClick={() => window.location.href = '/dashboard'}>
+                  {t('landing.goToProfile')}
+                </Button>
+              ) : (
+                <Button size="sm" variant="secondary" className="hidden md:flex" onClick={() => openAuth('login')}>
+                  {t('landing.signIn')}
+                </Button>
+              )}
             </div>
           </div>
         </header>
@@ -86,10 +99,19 @@ export const LandingPage: React.FC = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="w-full sm:w-auto group" onClick={() => openAuth('register')}>
-                  {t('landing.getStartedFree')}
-                  <ArrowRight size={16} className="ml-2 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all" />
-                </Button>
+                {isAuthenticated ? (
+                  <Button size="lg" className="w-full sm:w-auto group" onClick={() => window.location.href = '/dashboard'}>
+                    {t('landing.goToProfile')}
+                    <ArrowRight size={16} className="ml-2 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all" />
+                  </Button>
+                ) : (
+                  <>
+                    <Button size="lg" className="w-full sm:w-auto group" onClick={() => openAuth('register')}>
+                      {t('landing.getStartedFree')}
+                      <ArrowRight size={16} className="ml-2 opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all" />
+                    </Button>
+                  </>
+                )}
                 <Button
                   variant="secondary"
                   size="lg"
@@ -236,10 +258,10 @@ export const LandingPage: React.FC = () => {
         </footer>
       </div>
 
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-        onSuccess={() => {}}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => { }}
         initialMode={authMode}
       />
     </>

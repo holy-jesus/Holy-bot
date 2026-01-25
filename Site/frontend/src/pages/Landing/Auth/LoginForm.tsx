@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Mail, Lock, User, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { loginWithPassword, loginWithEmail, verifyEmail } from '@/services/auth';
+import { toast } from 'sonner';
 interface LoginFormProps {
   onSuccess: () => void;
   onSwitchToRegister: () => void;
@@ -16,18 +18,49 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [verifyCode, setVerifyCode] = useState('');
+
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Mocking API delays
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    if (loginMethod === 'code' && !isCodeSent) {
-      setIsCodeSent(true);
-      setIsLoading(false);
-      return;
+
+    try {
+      if (loginMethod === 'password') {
+        await loginWithPassword(username, password);
+        onSuccess();
+      } else {
+        if (!isCodeSent) {
+          if (!validateEmail(email)) {
+            toast.error(t('auth.errorEmail'));
+            setIsLoading(false);
+            return;
+          }
+          await loginWithEmail(email);
+          setIsCodeSent(true);
+          toast.success(t('auth.codeSentSuccess'));
+        } else {
+          await verifyEmail(verifyCode);
+          onSuccess();
+        }
+      }
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      const status = error.response?.status;
+
+      if (status === 401) {
+        toast.error(loginMethod === 'password' ? t('auth.errorInvalidCredentials') : t('auth.invalidCode'));
+      } else if (status === 429) {
+        toast.error(t('auth.errorTooManyRequests'));
+      } else if (status >= 500) {
+        toast.error(t('auth.errorServerError'));
+      } else {
+        toast.error(t('auth.errorGeneric'));
+      }
     }
-    
-    onSuccess();
+
     setIsLoading(false);
   };
   return (
@@ -106,7 +139,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
           type="submit"
           className="w-full py-4 text-sm font-bold shadow-xl shadow-brand-500/10"
           disabled={isLoading}
-          icon={isLoading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> : <ArrowRight size={18}/>}
+          icon={isLoading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> : <ArrowRight size={18} />}
         >
           {loginMethod === 'code' && !isCodeSent ? t('auth.sendCode') : t('auth.signIn')}
         </Button>
