@@ -18,12 +18,13 @@ class User(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True, unique=True, default=uuid7)
     email: Mapped[str]
     username: Mapped[str]
+    is_admin: Mapped[bool] = mapped_column(default=False)
+    is_banned: Mapped[bool] = mapped_column(default=False)
 
     password_hash: Mapped[str | None] = mapped_column(nullable=True)
 
     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(), server_onupdate=func.now())
-    # last_login_at: Mapped[datetime.datetime]
 
     sessions: Mapped[list["Session"]] = relationship(
         back_populates="user",

@@ -6,3 +6,4 @@ loguru~=0.7.3
 valkey[libvalkey]~=6.1.1
 orjson~=3.11.5
 nats-py~=2.12.0
+typer~=0.21.1

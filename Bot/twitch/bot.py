@@ -207,43 +207,6 @@ class TwitchBot:
         if part:
             await self._send(f"PART {part}")
 
-    # API
-
-    async def delete_chat_messages(self, broadcaster_id, message_id=None):
-        await self.make_api_request(
-            "delete_chat_messages",
-            broadcaster_id=broadcaster_id,
-            moderator_id=self.bot["user-id"],
-            message_id=message_id,
-        )
-
-    async def send_chat_announcement(
-        self,
-        text: str,
-        broadcaster_id: str,
-        color: Literal["blue", "green", "orange", "purple"] = None,
-    ):
-        await self.make_api_request(
-            "send_chat_announcement",
-            broadcaster_id=broadcaster_id,
-            moderator_id=self.bot["user-id"],
-            text=text,
-            color=color,
-        )
-
-    async def ban_user(self, broadcaster_id, user_id, duration=None, reason=None):
-        await self.make_api_request(
-            "ban_user",
-            broadcaster_id=broadcaster_id,
-            moderator_id=self.bot["user-id"],
-            user_id=user_id,
-            duration=duration,
-            reason=reason,
-        )
-
-    async def make_api_request(self, event: str, **kwargs):
-        await client.send_event("twitchapi", event, **kwargs)
-
     # Parsing events
 
     def _parse_event(self, message: str) -> dict:
