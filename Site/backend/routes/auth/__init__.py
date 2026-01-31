@@ -1,4 +1,4 @@
-from .auth import auth
+from .router import auth
 
 from .csrf import *
 from .login import *

@@ -1,4 +1,4 @@
-from .auth import auth
+from .router import auth
 
 import secrets
 from typing import Annotated

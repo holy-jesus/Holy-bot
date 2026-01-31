@@ -24,13 +24,19 @@ class User(Base):
     password_hash: Mapped[str | None] = mapped_column(nullable=True)
 
     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(), server_onupdate=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        server_default=func.now(), server_onupdate=func.now()
+    )
 
     sessions: Mapped[list["Session"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )
     twitch_token: Mapped["TwitchToken"] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    twitch_channel: Mapped["TwitchChannel"] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )

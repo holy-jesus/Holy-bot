@@ -11,7 +11,7 @@ from holybot_shared.db_models import User, Session, TempSession
 from Site.backend.models import UserCreate
 from Site.backend.services.auth.password import hash_password
 
-SESSION_LIFETIME = timedelta(days=int(os.getenv("SESSION_LIFETIME_DAYS", "7")))
+SESSION_TTL = timedelta(days=int(os.getenv("SESSION_TTL_DAYS", "7")))
 SESSION_REFRESH = timedelta(days=int(os.getenv("SESSION_REFRESH_DAYS", "5")))
 
 

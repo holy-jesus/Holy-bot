@@ -1,9 +1,11 @@
+from .router import auth
+
 from fastapi import Depends, HTTPException, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from Site.backend.deps import get_db_session
 from Site.backend.services.auth.session import get_session
 from Site.backend.services.auth.cookie import set_session_cookie
-from .auth import auth
 
 
 @auth.get("/me")

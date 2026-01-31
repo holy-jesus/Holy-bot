@@ -21,14 +21,10 @@ class Client:
         self.__class_instance: object = None
         self._nc: NATSClient | None = None
         self.__events: dict[str, Callable] = {}
-        # Словари для ожидания ответов (futures) больше не нужны, NATS берет это на себя
 
     async def start(self):
-        # Подключение к NATS
         self._nc = await nats.connect(self.__nats_url, loop=self.__loop)
 
-        # Подписка на топик (Subject) равный имени клиента.
-        # queue=self.__name обеспечивает Load Balancing (аналог Consumer Group в Kafka).
         await self._nc.subscribe(
             self.__name, cb=self.__nats_callback, queue=self.__name
         )
@@ -38,7 +34,7 @@ class Client:
 
     async def stop(self):
         if self._nc:
-            await self._nc.drain()  # Ждем обработки последних сообщений
+            await self._nc.drain()
             await self._nc.close()
 
     async def __nats_callback(self, msg: Msg):
@@ -54,7 +50,7 @@ class Client:
 
     async def send_event(
         self,
-        topic: str,  # В терминах NATS это Subject, но оставим имя аргумента
+        topic: str,
         event_name: str,
         wait_for_response: bool = False,
         response_timeout: float = 30.0,
@@ -73,16 +69,12 @@ class Client:
 
         try:
             if wait_for_response:
-                # NATS Native Request-Reply
-                # Мы просто ждем ответа, NATS сам создает уникальный inbox для ответа
                 response_msg = await self._nc.request(
                     topic, payload, timeout=response_timeout
                 )
 
-                # Декодируем ответ
                 response_data = orjson.loads(response_msg.data)
 
-                # В старой логике ответ был обернут. Если вы сохраняете структуру:
                 if isinstance(response_data, dict) and "response" in response_data:
                     return response_data["response"]
                 return response_data
@@ -122,14 +114,12 @@ class Client:
 
     async def __on_message(self, data: dict, msg: Msg):
         if "type" not in data or data["type"] != "event":
-            # Обработку type="response" убрали, так как send_event теперь ждет ответ линейно
             logger.error(f"Неправильные данные или тип: {data}")
             return
 
         await self.__on_event(data, msg)
 
     async def __on_event(self, data: dict, msg: Msg):
-        # Проверка ключей (id и response больше не обязательны в payload, так как это свойства протокола NATS)
         if not all(key in data for key in ("name", "from", "args", "kwargs")):
             logger.error(f"Неполные данные события: {data}")
             return
@@ -139,7 +129,6 @@ class Client:
             logger.error(f"Неизвестное событие: {data['name']}.")
             return
 
-        # Выполнение функции
         try:
             if iscoroutinefunction(func):
                 result = await func(
@@ -151,10 +140,14 @@ class Client:
             logger.exception(f"Error executing event {data['name']}")
             result = None
 
-        # Если у сообщения есть reply subject (то есть отправитель сделал request), отправляем ответ
         if msg.reply:
             response_payload = orjson.dumps({"type": "response", "response": result})
             await self._nc.publish(msg.reply, response_payload)
+
+    # IDE Typing autogeneration
+
+    def generate_typing(self):
+        pass
 
 
 if __name__ == "__main__":
@@ -180,13 +173,11 @@ if __name__ == "__main__":
         await client.start()
 
         print("[Client] Sending request...")
-        # wait_for_response=True использует NATS Request
         response = await client.send_event(
             "recognizer", "recognize", login="hoiy_jesus", wait_for_response=True
         )
         print(f"[Client] Got response: {response}")
 
-        # wait_for_response=False использует NATS Publish
         print("[Client] Sending fire-and-forget...")
         await client.send_event(
             "recognizer", "recognize", login="silent_user", wait_for_response=False
@@ -194,7 +185,6 @@ if __name__ == "__main__":
 
     try:
         loop.run_until_complete(main())
-        # Небольшая пауза, чтобы успел обработаться fire-and-forget
         loop.run_until_complete(asyncio.sleep(0.5))
     except KeyboardInterrupt:
         pass

@@ -6,8 +6,8 @@ from datetime import timedelta
 import valkey.asyncio as valkey
 from Site.backend.services.ratelimit import ratelimit
 
-CSRF_TOKEN_LIFETIME = timedelta(
-    minutes=int(os.getenv("CSRF_TOKEN_LIFETIME_MINUTES", "5"))
+CSRF_TOKEN_TTL = timedelta(
+    minutes=int(os.getenv("CSRF_TOKEN_TTL_MINUTES", "5"))
 )
 CSRF_MINIMUM_TIME_SINCE_ISSUE = timedelta(
     seconds=int(os.getenv("CSRF_MINIMUM_TIME_SINCE_ISSUE_SECONDS", "5"))
@@ -35,7 +35,7 @@ async def create_csrf_token(ip_address: str, vk: valkey.Valkey) -> str:
     await vk.set(
         name=f"csrf:{csrf}",
         value=now,
-        ex=CSRF_TOKEN_LIFETIME.seconds,
+        ex=CSRF_TOKEN_TTL.seconds,
     )
 
     return csrf
