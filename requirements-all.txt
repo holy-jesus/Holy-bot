@@ -1,0 +1,24 @@
+# API
+twitchio~=3.2.0
+cryptography~=46.0.4
+
+# Bot
+websockets~=16.0
+uvloop~=0.22.1
+loguru~=0.7.3
+orjson~=3.11.5
+pydantic~=2.7.2
+
+# Shared
+SQLAlchemy~=2.0.45
+pydantic~=2.12.5
+asyncpg~=0.31.0
+loguru~=0.7.3
+valkey[libvalkey]~=6.1.1
+orjson~=3.11.5
+nats-py~=2.12.0
+typer~=0.21.1
+
+# Site/backend
+fastapi[standard]~=0.128.0
+argon2-cffi~=25.1.0

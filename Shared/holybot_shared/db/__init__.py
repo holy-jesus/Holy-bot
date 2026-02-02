@@ -2,6 +2,9 @@ from .base import Base
 from .user import User
 from .session import Session
 from .temp_session import TempSession
-from .twitch_token import TwitchToken
 
-__all__ = ["Base", "User", "Session", "TempSession", "TwitchToken"]
+from .twitch import *
+
+from .factory import async_session_factory as factory
+
+__all__ = ["Base", "User", "Session", "TempSession", "TwitchToken", "factory"]

@@ -1,7 +1,7 @@
 from sqlalchemy import select, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from holybot_shared.db_models import User
+from holybot_shared.db import User
 
 
 async def email_already_exists(email: str, db: AsyncSession) -> bool:

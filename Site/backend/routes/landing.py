@@ -3,7 +3,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Site.backend.deps import get_db_session
-from holybot_shared.db_models import User
+from holybot_shared.db import User
 
 landing = APIRouter(prefix="/landing")
 

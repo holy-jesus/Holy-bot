@@ -16,3 +16,11 @@
 Alembic надо запускать с указанием конфига.
 
 `alembic -c ./configs/alembic.ini`
+
+Для обновления stubs:
+
+`python Shared/holybot_shared/communicator/stub_generator.py`
+
+Для обновления proto:
+
+`protoc --python_betterproto2_out=./Shared/holybot_shared/SharedProto ./Shared/proto/*`

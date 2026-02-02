@@ -5,7 +5,7 @@ from alembic import context
 from sqlalchemy import create_engine, pool
 from sqlalchemy.engine.url import URL
 
-from Shared.holybot_shared import db_models
+from Shared.holybot_shared import db
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -20,7 +20,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = db_models.Base.metadata
+target_metadata = db.Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

@@ -6,7 +6,7 @@ from fastapi import Cookie, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import delete
 
-from holybot_shared.db_models import Session
+from holybot_shared.db import Session
 from Site.backend.deps import get_db_session
 
 

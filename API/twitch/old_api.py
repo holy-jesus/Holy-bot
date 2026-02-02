@@ -46,24 +46,7 @@ class TwitchApi:
 
     async def make_request(
         self, method, url, headers=None, params=None, data=None, json=None
-    ):
-        if self.session is None:
-            self.session = aiohttp.ClientSession()
-        response = await self.session.request(
-            method, url, headers=headers, params=params, data=data, json=json
-        )
-        if response.status < 300:
-            logger.debug(f"{method} {url} {response.status}")
-        else:
-            logger.error(f"{method} {url} {response.status}\n{await response.text()}")
-            self.loop.create_task(
-                self.error(
-                    "TwitchAPI request",
-                    f"{method} {url} {response.status}\n{await response.text()}",
-                )
-            )
-        return response
-
+    ): ...
     async def create_app_token(self):
         app_access_token = await self.db.config.find_one({"_id": "app_access_token"})
         if app_access_token and app_access_token["expiration_time"] > time():
@@ -111,22 +94,7 @@ class TwitchApi:
         )
 
     @client.event()
-    async def user_logged_in(self, code: str):
-        user = {}
-        response = await self.make_request(
-            "POST",
-            "https://id.twitch.tv/oauth2/token"
-            f"?client_id={self.client_id}&client_secret={self.secret}&code={code}&"
-            "grant_type=authorization_code&redirect_uri=http://localhost:8000/login",
-        )
-        data = await response.json(loads=orjson.loads)
-        user["access_token"] = data["access_token"]
-        user["expires"] = data["expires_in"] + time()
-        user["refresh_token"] = data["refresh_token"]
-        data = await self.get_users(token=user["access_token"])
-        user["id"] = data[0]["id"]
-        user["login"] = data[0]["login"]
-        return user
+    async def user_logged_in(self, code: str): ...
 
     @client.event()
     async def get_user_information(self, user_id: str, access_token: str):

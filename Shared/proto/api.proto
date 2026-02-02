@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package holybot.api;
+
+message UserLoggedIn {
+    string user_id = 1;
+    string code = 2;
+    string redirect_uri = 3;
+}
+

@@ -78,7 +78,7 @@ class TwitchBot:
         await self._connect(event["session"]["reconnect_url"], session_id)
 
     async def _keepalive(self, message: Message):
-        message.metadata.
+        message.metadata
 
     # Connecting and health
 

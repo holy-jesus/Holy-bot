@@ -7,7 +7,7 @@ from sqlalchemy import select, exists, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from holybot_shared.db_models import User, Session, TempSession
+from holybot_shared.db import User, Session, TempSession
 from Site.backend.models import UserCreate
 from Site.backend.services.auth.password import hash_password
 
@@ -51,7 +51,7 @@ async def get_session(
     if session is None:
         return True, None
     elif datetime.now(timezone.utc) >= (
-        session.created_at + SESSION_LIFETIME
+        session.created_at + SESSION_TTL
     ).astimezone(timezone.utc):
         await db.delete(session)
         return True, None

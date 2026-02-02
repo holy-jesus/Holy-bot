@@ -1,5 +1,6 @@
 from .router import auth
 
+import json
 import secrets
 from hashlib import sha256
 
@@ -14,13 +15,12 @@ from Site.backend.services.auth.user import (
     get_user_by_username,
     get_user_by_email,
 )
-from Site.backend.services.auth.session import create_session, SESSION_LIFETIME
+from Site.backend.services.auth.session import create_session
 from Site.backend.services.email import send_login_code
-from Site.backend.models import UserLoginWithPassword, UserLoginWithEmail, UserLoginCode
 from Site.backend.services.auth.cookie import set_session_cookie
 from Site.backend.services.ratelimit import ratelimit
 from Site.backend.services.auth.password import verify_password
-import json
+from Site.backend.models import UserLoginWithPassword, UserLoginWithEmail, UserLoginCode
 
 LIMIT = 3
 WINDOW = 60

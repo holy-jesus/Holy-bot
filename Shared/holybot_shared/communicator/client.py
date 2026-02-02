@@ -1,7 +1,8 @@
 import asyncio
-from asyncio import BaseEventLoop
-from inspect import iscoroutinefunction, isfunction
+import os
+import inspect
 from typing import Callable
+from holybot_shared.SharedProto.google.protobuf import Any
 
 import nats
 import orjson
@@ -9,21 +10,28 @@ from loguru import logger
 from nats.aio.client import Client as NATSClient
 from nats.aio.msg import Msg
 from nats.errors import TimeoutError as NatsTimeoutError
+from betterproto2 import Message
+
+from holybot_shared.communicator.stub import API
+from holybot_shared.SharedProto.holybot.api import Event, SimpleResponse
 
 
 class Client:
     def __init__(
-        self, name: str, loop: BaseEventLoop, nats_url: str = "nats://localhost:4222"
+        self,
+        name: str,
     ) -> None:
         self.__name: str = name
-        self.__loop: BaseEventLoop = loop
-        self.__nats_url: str = nats_url
+        self.__nats_url: str = os.getenv("NATS_URL")
         self.__class_instance: object = None
         self._nc: NATSClient | None = None
         self.__events: dict[str, Callable] = {}
+        self._wrapped_class_ref = None
 
-    async def start(self):
-        self._nc = await nats.connect(self.__nats_url, loop=self.__loop)
+        self.API = API(self)
+
+    async def connect(self):
+        self._nc = await nats.connect(self.__nats_url)
 
         await self._nc.subscribe(
             self.__name, cb=self.__nats_callback, queue=self.__name
@@ -32,7 +40,7 @@ class Client:
             f"Client {self.__name} started and listening on subject '{self.__name}'"
         )
 
-    async def stop(self):
+    async def close(self):
         if self._nc:
             await self._nc.drain()
             await self._nc.close()
@@ -40,51 +48,42 @@ class Client:
     async def __nats_callback(self, msg: Msg):
         """Callback функция, вызываемая NATS при получении сообщения"""
         try:
-            data = orjson.loads(msg.data)
-            # Передаем само сообщение msg, чтобы можно было ответить через msg.respond
-            await self.__on_message(data, msg)
-        except orjson.JSONDecodeError:
-            logger.error(f"Неизвестные данные: {msg.data}")
+            await self.__on_message(msg)
         except Exception as e:
             logger.exception(e)
 
     async def send_event(
         self,
-        topic: str,
-        event_name: str,
-        wait_for_response: bool = False,
-        response_timeout: float = 30.0,
-        *args,
-        **kwargs,
+        receiver: str,
+        function_name: str,
+        response_type: Message,
+        wait_for_response: bool,
+        timeout: float,
+        payload: Message,
     ):
-        payload = orjson.dumps(
-            {
-                "type": "event",
-                "from": self.__name,
-                "name": event_name,
-                "args": list(args),
-                "kwargs": kwargs,
-            }
-        )
+
+        payload_any = Any.pack(payload)
+
+        event = Event(function_name=function_name, payload=payload_any)
 
         try:
+            logger.info(f"wait_for_response: {wait_for_response}")
             if wait_for_response:
-                response_msg = await self._nc.request(
-                    topic, payload, timeout=response_timeout
+                response_msg: Msg = await self._nc.request(
+                    receiver, bytes(event), timeout=timeout
                 )
 
-                response_data = orjson.loads(response_msg.data)
+                response_data = response_msg.data
 
-                if isinstance(response_data, dict) and "response" in response_data:
-                    return response_data["response"]
-                return response_data
+                logger.trace(f"Response from {receiver}: {response_data}")
+
+                return response_type.parse(response_data)
             else:
-                # Fire and Forget (просто публикация)
-                await self._nc.publish(topic, payload)
+                await self._nc.publish(receiver, bytes(event))
                 return None
         except NatsTimeoutError:
             logger.error(
-                f"Timeout waiting for response from {topic} (event: {event_name})"
+                f"Timeout waiting for response from {receiver} (event: {function_name})"
             )
             return None
         except Exception as e:
@@ -99,96 +98,45 @@ class Client:
             self.__events[name] = func
             return func
 
-        if isfunction(name):
+        if inspect.isfunction(name):
             func = name
             name = func.__name__
             return wrapper(func)
         return wrapper
 
     def wrap_class(self, _class):
+        self._wrapped_class_ref = _class
+
         def wrapper(*args, **kwargs):
             self.__class_instance = _class(*args, **kwargs)
             return self.__class_instance
 
         return wrapper
 
-    async def __on_message(self, data: dict, msg: Msg):
-        if "type" not in data or data["type"] != "event":
-            logger.error(f"Неправильные данные или тип: {data}")
-            return
+    def get_registered_events(self):
+        return self.__events
 
-        await self.__on_event(data, msg)
-
-    async def __on_event(self, data: dict, msg: Msg):
-        if not all(key in data for key in ("name", "from", "args", "kwargs")):
-            logger.error(f"Неполные данные события: {data}")
-            return
-
-        func = self.__events.get(data["name"], None)
+    async def __on_message(self, msg: Msg):
+        event = Event.parse(msg.data)
+        func = self.__events.get(event.function_name, None)
         if func is None:
-            logger.error(f"Неизвестное событие: {data['name']}.")
+            logger.error(f"Unknown function: {event.function_name}.")
             return
+
+        payload = event.payload
+        if payload is None:
+            payload = {}
+        else:
+            payload = payload.unpack()
 
         try:
-            if iscoroutinefunction(func):
-                result = await func(
-                    self.__class_instance, *data["args"], **data["kwargs"]
-                )
+            if inspect.iscoroutinefunction(func):
+                result: Message = await func(self.__class_instance, payload)
             else:
-                result = func(self.__class_instance, *data["args"], **data["kwargs"])
+                result: Message = func(self.__class_instance, payload)
         except Exception as e:
-            logger.exception(f"Error executing event {data['name']}")
-            result = None
+            logger.exception(f"Error executing event {event.function_name}")
+            result = SimpleResponse(success=False, message=str(e))
 
         if msg.reply:
-            response_payload = orjson.dumps({"type": "response", "response": result})
-            await self._nc.publish(msg.reply, response_payload)
-
-    # IDE Typing autogeneration
-
-    def generate_typing(self):
-        pass
-
-
-if __name__ == "__main__":
-    # Пример использования
-    # Для теста нужен запущенный NATS сервер (nats-server)
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    # Создаем два клиента для имитации общения
-    server = Client("recognizer", loop)
-    client = Client("client", loop)
-
-    # Регистрируем обработчик на "сервере"
-    @server.event("recognize")
-    async def recognize_handler(inst, login):
-        print(f"[Server] Processing recognize for {login}...")
-        await asyncio.sleep(1)  # Имитация работы
-        return f"User {login} recognized!"
-
-    async def main():
-        await server.start()
-        await client.start()
-
-        print("[Client] Sending request...")
-        response = await client.send_event(
-            "recognizer", "recognize", login="hoiy_jesus", wait_for_response=True
-        )
-        print(f"[Client] Got response: {response}")
-
-        print("[Client] Sending fire-and-forget...")
-        await client.send_event(
-            "recognizer", "recognize", login="silent_user", wait_for_response=False
-        )
-
-    try:
-        loop.run_until_complete(main())
-        loop.run_until_complete(asyncio.sleep(0.5))
-    except KeyboardInterrupt:
-        pass
-    finally:
-        loop.run_until_complete(client.stop())
-        loop.run_until_complete(server.stop())
-        loop.stop()
+            await self._nc.publish(msg.reply, bytes(result))

@@ -3,6 +3,8 @@ FROM python:3.14.2-alpine
 WORKDIR /app
 ENV PYTHONPATH=/app
 
+RUN apk add --no-cache gcc musl-dev
+
 COPY ./Shared /app/Shared
 RUN pip install --no-cache-dir --upgrade --root-user-action ignore ./Shared
 

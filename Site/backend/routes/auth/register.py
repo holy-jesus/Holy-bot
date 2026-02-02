@@ -24,7 +24,7 @@ from Site.backend.services.auth.cookie import (
 from Site.backend.services.email import send_verification_code
 from Site.backend.deps import get_db_session
 from Site.backend.models import UserCreate
-from holybot_shared.db_models import User
+from holybot_shared.db import User
 
 
 @auth.post("/register", status_code=202)

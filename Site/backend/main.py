@@ -5,6 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import valkey.asyncio as valkey
 
+from holybot_shared.communicator import Client
+from holybot_shared.SharedProto.holybot.api import UserLoggedIn
+
 from .routes import routes
 
 
@@ -14,8 +17,12 @@ async def lifespan(app: FastAPI):
         host=os.getenv("VALKEY_HOST", "valkey"),
         port=int(os.getenv("VALKEY_PORT", "6379")),
     )
+    app.state.client = Client("Website")
+    await app.state.client.connect()
+
     yield
     await app.state.valkey.aclose()
+    await app.state.client.close()
 
 
 app = FastAPI(lifespan=lifespan)
